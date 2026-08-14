@@ -1194,7 +1194,6 @@
     <!-- Modular Application Logic Scripts -->
     
 <script>
-/* BUNDLED LOGIC FOR SELF-CONTAINED SINGLE FILE EXECUTION */
 /**
  * Generator for realistic benchmark sample data matching user's exact schema.
  * Contains 30 sites across 5 Regions (North, South, East, West, Central)
@@ -1304,8 +1303,8 @@ window.generateSampleDataset = function() {
 
 if (typeof window.formatRupee !== 'function') {
     window.formatRupee = function(amount) {
-        if (isNaN(amount) || amount === null || amount === undefined) return "â‚¹0";
-        return "â‚¹" + Math.round(amount).toLocaleString('en-IN');
+        if (isNaN(amount) || amount === null || amount === undefined) return "₹0";
+        return "₹" + Math.round(amount).toLocaleString('en-IN');
     };
 }
 
@@ -1810,7 +1809,7 @@ function parseNumber(val) {
     return isNaN(num) ? 0 : num;
 }
 
-/** â”€â”€ ONEDRIVE ONLINE CLIPBOARD COPY-PASTE PARSER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/** ── ONEDRIVE ONLINE CLIPBOARD COPY-PASTE PARSER ───────────────────── */
 window.parseClipboardData = function(text, callback) {
     try {
         if (!text || !text.trim()) {
@@ -1888,7 +1887,7 @@ window.parseClipboardData = function(text, callback) {
     }
 };
 
-/** â”€â”€ ONEDRIVE DIRECT URL PARSER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/** ── ONEDRIVE DIRECT URL PARSER ───────────────────────────────────── */
 window.parseOneDriveUrl = function(url, callback) {
     if (!url || !url.trim()) {
         alert("Please enter a valid OneDrive/SharePoint URL.");
@@ -1973,8 +1972,8 @@ window.parseOneDriveUrl = function(url, callback) {
 
 // Utility for currency formatting (Indian Rupee style)
 window.formatRupee = function(amount) {
-    if (isNaN(amount) || amount === null) return "â‚¹0";
-    return "â‚¹" + Math.round(amount).toLocaleString('en-IN');
+    if (isNaN(amount) || amount === null) return "\u20B90";
+    return "\u20B9" + Math.round(amount).toLocaleString('en-IN');
 };
 
 /**
@@ -2233,7 +2232,7 @@ window.renderFinancialReport = function(sites) {
     renderPortfolioBenchmarkAnalysis(filtered);
 };
 
-/** â”€â”€ Helper 1: Cost Structure Analysis â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/** ── Helper 1: Cost Structure Analysis ───────────────────────────── */
 function renderCostStructureAnalysis(sites) {
     const container = document.getElementById('costStructureContainer');
     if (!container) return;
@@ -2293,7 +2292,7 @@ function renderCostStructureAnalysis(sites) {
     `;
 }
 
-/** â”€â”€ Helper 2: Profit Pareto Analysis â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/** ── Helper 2: Profit Pareto Analysis ───────────────────────────── */
 function renderProfitParetoAnalysis(sites) {
     const container = document.getElementById('profitParetoContainer');
     if (!container) return;
@@ -2323,7 +2322,7 @@ function renderProfitParetoAnalysis(sites) {
                         <button onclick="openSiteDetailModal('${s.siteCode}')" class="w-full text-left p-2 rounded bg-gray-950/60 hover:bg-gray-800 transition flex items-center justify-between text-xs group">
                             <div>
                                 <span class="font-bold text-white group-hover:underline block">${s.siteName}</span>
-                                <span class="text-[11px] text-brand-400 font-mono block">${s.siteCode} Â· ${s.region}</span>
+                                <span class="text-[11px] text-brand-400 font-mono block">${s.siteCode} · ${s.region}</span>
                             </div>
                             <div class="text-right font-mono">
                                 <span class="font-bold ${s.activeNetProfit >= 0 ? 'text-emerald-400' : 'text-red-400'} block">${formatRupee(s.activeNetProfit)}</span>
@@ -2343,7 +2342,7 @@ function renderProfitParetoAnalysis(sites) {
     `;
 }
 
-/** â”€â”€ Helper 3: Portfolio Benchmark Analysis â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/** ── Helper 3: Portfolio Benchmark Analysis ─────────────────────── */
 function renderPortfolioBenchmarkAnalysis(sites) {
     const container = document.getElementById('portfolioBenchmarkContainer');
     if (!container) return;
@@ -2399,7 +2398,7 @@ function renderPortfolioBenchmarkAnalysis(sites) {
     container.innerHTML = `
         <div class="mb-3 text-xs text-gray-400 flex flex-wrap items-center justify-between gap-2">
             <span>Portfolio Averages: Billing = <strong class="text-white">${formatRupee(avgBillPerSite)}</strong> / site | Operating Cost = <strong class="text-amber-300">${formatRupee(avgCostPerSite)}</strong> / site</span>
-            <span class="text-[11px] text-gray-500">Variance = Site Metric âˆ’ Portfolio Avg</span>
+            <span class="text-[11px] text-gray-500">Variance = Site Metric − Portfolio Avg</span>
         </div>
         <div class="overflow-auto max-h-[70vh] rounded-xl border border-gray-800/80">
             <table class="w-full text-left text-xs border-collapse">
@@ -2588,7 +2587,7 @@ window.renderMonthlyTrendsReport = function(sites) {
     const tbody = document.getElementById('tblMonthlyTrendsBody');
     if (!tbody) return;
 
-    // Keys MUST match parser storage â€” parser uses title-case: 'Jan', 'Feb', etc.
+    // Keys MUST match parser storage — parser uses title-case: 'Jan', 'Feb', etc.
     const months = [
         { key: 'Jan', label: 'January 2026' },
         { key: 'Feb', label: 'February 2026' },
@@ -2649,7 +2648,7 @@ window.renderMonthlyTrendsReport = function(sites) {
 };
 
 /**
- * â”€â”€ INTERACTIVE SITE DETAIL & CALCULATION AUDIT MODAL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+ * ── INTERACTIVE SITE DETAIL & CALCULATION AUDIT MODAL ────────────────
  */
 window.openSiteDetailModal = function(siteCode) {
     // 1. Search filteredDataset first (which has activeBilling/Expense/Consumption), then activeDataset
@@ -2677,7 +2676,7 @@ window.openSiteDetailModal = function(siteCode) {
     const selMonth = window.selectedMonth || 'ALL';
     const mName = selMonth !== 'ALL' 
         ? `Month: ${selMonth} 2026` 
-        : 'Janâ€“Aug 2026 (Aggregated)';
+        : 'Jan–Aug 2026 (Aggregated)';
 
     // 2. Compute b, e, c reliably
     let b = 0, e = 0, c = 0;
@@ -2709,12 +2708,12 @@ window.openSiteDetailModal = function(siteCode) {
         ? ((c / (site.activeRegionTotalConsumption || site.totalConsumption)) * 100).toFixed(2) 
         : '0.00';
 
-    document.getElementById('modalSiteTitle').innerText = `${site.siteCode} â€” ${site.siteName}`;
+    document.getElementById('modalSiteTitle').innerText = `${site.siteCode} — ${site.siteName}`;
     document.getElementById('modalSiteSubtitle').innerText = `Region: ${site.region} | Customer: ${site.customerGroup} | Manager: ${site.manager} | ${mName}`;
 
     let healthBadge = '';
     if (parseFloat(marginPct) >= 20)      healthBadge = '<span class="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold text-xs">Healthy Margin (&ge;20%)</span>';
-    else if (parseFloat(marginPct) >= 5)  healthBadge = '<span class="px-3 py-1 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 font-bold text-xs">Moderate Margin (5â€“20%)</span>';
+    else if (parseFloat(marginPct) >= 5)  healthBadge = '<span class="px-3 py-1 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 font-bold text-xs">Moderate Margin (5–20%)</span>';
     else                                   healthBadge = '<span class="px-3 py-1 rounded-full bg-red-500/20 text-red-400 border border-red-500/30 font-bold text-xs">Critical Margin (&lt;5%)</span>';
 
     // Compute Advanced Executive Analysis Metrics for this site
@@ -2731,8 +2730,8 @@ window.openSiteDetailModal = function(siteCode) {
     const matSharePct   = totalCost > 0 ? ((c / totalCost) * 100).toFixed(1) : '0.0';
 
     let costDriverTag = '';
-    if (parseFloat(laborSharePct) >= 75) costDriverTag = 'Labor-Heavy (â‰¥75%)';
-    else if (parseFloat(matSharePct) >= 25) costDriverTag = 'Material-Intensive (â‰¥25%)';
+    if (parseFloat(laborSharePct) >= 75) costDriverTag = 'Labor-Heavy (≥75%)';
+    else if (parseFloat(matSharePct) >= 25) costDriverTag = 'Material-Intensive (≥25%)';
     else costDriverTag = 'Balanced Cost';
 
     let benchmarkTag = '';
@@ -2801,42 +2800,42 @@ window.openSiteDetailModal = function(siteCode) {
                     <span class="text-white">${formatRupee(e)} + ${formatRupee(c)} = <strong class="text-amber-300">${formatRupee(totalCost)}</strong></span>
                 </div>
                 <div class="pt-2 flex flex-wrap justify-between items-center">
-                    <span class="text-gray-400 font-sans">2. Net Profit (Billing âˆ’ Total Cost):</span>
-                    <span class="text-white">${formatRupee(b)} âˆ’ ${formatRupee(totalCost)} = <strong class="${profit >= 0 ? 'text-emerald-400' : 'text-red-400'}">${formatRupee(profit)}</strong></span>
+                    <span class="text-gray-400 font-sans">2. Net Profit (Billing − Total Cost):</span>
+                    <span class="text-white">${formatRupee(b)} − ${formatRupee(totalCost)} = <strong class="${profit >= 0 ? 'text-emerald-400' : 'text-red-400'}">${formatRupee(profit)}</strong></span>
                 </div>
                 <div class="pt-2 flex flex-wrap justify-between items-center">
-                    <span class="text-gray-400 font-sans">3. Gross Margin % (Net Profit Ã· Billing Ã— 100):</span>
-                    <span class="text-white">(${formatRupee(profit)} Ã· ${formatRupee(b)}) Ã— 100 = <strong class="${parseFloat(marginPct) >= 15 ? 'text-emerald-400' : 'text-amber-400'}">${marginPct}%</strong></span>
+                    <span class="text-gray-400 font-sans">3. Gross Margin % (Net Profit ÷ Billing × 100):</span>
+                    <span class="text-white">(${formatRupee(profit)} ÷ ${formatRupee(b)}) × 100 = <strong class="${parseFloat(marginPct) >= 15 ? 'text-emerald-400' : 'text-amber-400'}">${marginPct}%</strong></span>
                 </div>
                 <div class="pt-2 flex flex-wrap justify-between items-center">
-                    <span class="text-gray-400 font-sans">4. Site Consumption / Billing % (Consumption Ã· Billing Ã— 100):</span>
-                    <span class="text-white">(${formatRupee(c)} Ã· ${formatRupee(b)}) Ã— 100 = <strong class="${parseFloat(consPct) >= 7 ? 'text-red-400' : 'text-emerald-400'}">${consPct}% ${parseFloat(consPct) >= 7 ? 'âš ï¸ (&ge;7% Threshold Alert)' : ''}</strong></span>
+                    <span class="text-gray-400 font-sans">4. Site Consumption / Billing % (Consumption ÷ Billing × 100):</span>
+                    <span class="text-white">(${formatRupee(c)} ÷ ${formatRupee(b)}) × 100 = <strong class="${parseFloat(consPct) >= 7 ? 'text-red-400' : 'text-emerald-400'}">${consPct}% ${parseFloat(consPct) >= 7 ? '⚠️ (&ge;7% Threshold Alert)' : ''}</strong></span>
                 </div>
                 <div class="pt-2 flex flex-wrap justify-between items-center">
-                    <span class="text-gray-400 font-sans">5. Region Share % (Site Cons Ã· Region Total Cons Ã— 100):</span>
-                    <span class="text-white">(${formatRupee(c)} Ã· ${formatRupee(site.activeRegionTotalConsumption || c)}) Ã— 100 = <strong class="text-indigo-300">${regShare}%</strong></span>
+                    <span class="text-gray-400 font-sans">5. Region Share % (Site Cons ÷ Region Total Cons × 100):</span>
+                    <span class="text-white">(${formatRupee(c)} ÷ ${formatRupee(site.activeRegionTotalConsumption || c)}) × 100 = <strong class="text-indigo-300">${regShare}%</strong></span>
                 </div>
 
                 <!-- ADVANCED EXECUTIVE FINANCIAL CALCULATIONS -->
                 <div class="pt-2.5 flex flex-wrap justify-between items-center border-t border-purple-500/30">
                     <span class="text-purple-300 font-sans font-semibold">6. Cost Structure Share (Labor % & Material %):</span>
                     <span class="text-white">
-                        Labor: (${formatRupee(e)} Ã· ${formatRupee(totalCost)}) Ã— 100 = <strong>${laborSharePct}%</strong> | 
-                        Material: (${formatRupee(c)} Ã· ${formatRupee(totalCost)}) Ã— 100 = <strong>${matSharePct}%</strong> 
+                        Labor: (${formatRupee(e)} ÷ ${formatRupee(totalCost)}) × 100 = <strong>${laborSharePct}%</strong> | 
+                        Material: (${formatRupee(c)} ÷ ${formatRupee(totalCost)}) × 100 = <strong>${matSharePct}%</strong> 
                         <span class="text-purple-300 text-[11px] ml-1 font-sans">(${costDriverTag})</span>
                     </span>
                 </div>
                 <div class="pt-2 flex flex-wrap justify-between items-center">
-                    <span class="text-indigo-300 font-sans font-semibold">7. Portfolio Billing Variance (Site Billing âˆ’ Portfolio Avg Billing):</span>
+                    <span class="text-indigo-300 font-sans font-semibold">7. Portfolio Billing Variance (Site Billing − Portfolio Avg Billing):</span>
                     <span class="text-white">
-                        ${formatRupee(b)} âˆ’ ${formatRupee(portfolioAvgBill)} = 
+                        ${formatRupee(b)} − ${formatRupee(portfolioAvgBill)} = 
                         <strong class="${billVariance >= 0 ? 'text-emerald-400' : 'text-amber-400'}">${billVariance >= 0 ? '+' : ''}${formatRupee(billVariance)}</strong>
                     </span>
                 </div>
                 <div class="pt-2 flex flex-wrap justify-between items-center">
-                    <span class="text-indigo-300 font-sans font-semibold">8. Portfolio Cost Variance (Site Operating Cost âˆ’ Portfolio Avg Cost):</span>
+                    <span class="text-indigo-300 font-sans font-semibold">8. Portfolio Cost Variance (Site Operating Cost − Portfolio Avg Cost):</span>
                     <span class="text-white">
-                        ${formatRupee(totalCost)} âˆ’ ${formatRupee(portfolioAvgCost)} = 
+                        ${formatRupee(totalCost)} − ${formatRupee(portfolioAvgCost)} = 
                         <strong class="${costVariance <= 0 ? 'text-emerald-400' : 'text-red-400'}">${costVariance >= 0 ? '+' : ''}${formatRupee(costVariance)}</strong>
                         <span class="text-gray-400 text-[11px] ml-1 font-sans">(${benchmarkTag})</span>
                     </span>
@@ -2848,7 +2847,7 @@ window.openSiteDetailModal = function(siteCode) {
         <div class="space-y-2">
             <h4 class="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center gap-2">
                 <i class="fa-solid fa-calendar-days text-amber-400"></i>
-                Month-by-Month Performance History (Janâ€“Aug 2026)
+                Month-by-Month Performance History (Jan–Aug 2026)
             </h4>
             <div class="overflow-x-auto rounded-xl border border-gray-800">
                 <table class="w-full text-left text-xs font-mono">
@@ -2892,7 +2891,7 @@ window.openSiteDetailModal = function(siteCode) {
             </div>
         </div>
 
-        <!-- ðŸ“– FINANCIAL TERMINOLOGY GLOSSARY -->
+        <!-- 📖 FINANCIAL TERMINOLOGY GLOSSARY -->
         <div class="bg-gray-900/60 rounded-xl p-4 border border-gray-800 space-y-3 text-xs text-gray-300">
             <h4 class="font-bold text-indigo-300 uppercase tracking-wider text-[11px] flex items-center gap-2">
                 <i class="fa-solid fa-book-open text-indigo-400"></i>
@@ -2900,24 +2899,24 @@ window.openSiteDetailModal = function(siteCode) {
             </h4>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div class="bg-gray-950/80 p-3 rounded-lg border border-gray-800 space-y-1">
-                    <span class="font-bold text-white block">ðŸ’µ Billing (B)</span>
+                    <span class="font-bold text-white block">💵 Billing (B)</span>
                     <p class="text-[11px] text-gray-400">Total gross revenue invoiced to the client for services rendered at this site.</p>
                 </div>
                 <div class="bg-gray-950/80 p-3 rounded-lg border border-gray-800 space-y-1">
-                    <span class="font-bold text-red-400 block">ðŸ‘· Manpower Expense (E)</span>
+                    <span class="font-bold text-red-400 block">👷 Manpower Expense (E)</span>
                     <p class="text-[11px] text-gray-400">Direct labor costs including supervisor pay, staff salaries, wages, and overtime deployed at this site.</p>
                 </div>
                 <div class="bg-gray-950/80 p-3 rounded-lg border border-gray-800 space-y-1">
-                    <span class="font-bold text-purple-400 block">ðŸ“¦ Material Consumption (C)</span>
+                    <span class="font-bold text-purple-400 block">📦 Material Consumption (C)</span>
                     <p class="text-[11px] text-gray-400">Cost of physical inventory, raw materials, cleaning supplies, or spare parts consumed at this site.</p>
                 </div>
                 <div class="bg-gray-950/80 p-3 rounded-lg border border-gray-800 space-y-1">
-                    <span class="font-bold text-emerald-400 block">ðŸ’° Net Profit</span>
-                    <p class="text-[11px] text-gray-400">Money remaining after paying all manpower and material costs: <strong>Billing âˆ’ (Expense + Consumption)</strong>.</p>
+                    <span class="font-bold text-emerald-400 block">💰 Net Profit</span>
+                    <p class="text-[11px] text-gray-400">Money remaining after paying all manpower and material costs: <strong>Billing − (Expense + Consumption)</strong>.</p>
                 </div>
                 <div class="bg-gray-950/80 p-3 rounded-lg border border-gray-800 space-y-1 sm:col-span-2">
-                    <span class="font-bold text-amber-400 block">ðŸ“ˆ Gross Margin (%)</span>
-                    <p class="text-[11px] text-gray-400">Percentage of revenue retained as net profit: <strong>(Net Profit Ã· Billing) Ã— 100</strong>. Measures site operational efficiency. Healthy &ge; 20%, Moderate 5â€“20%, Critical &lt; 5%.</p>
+                    <span class="font-bold text-amber-400 block">📈 Gross Margin (%)</span>
+                    <p class="text-[11px] text-gray-400">Percentage of revenue retained as net profit: <strong>(Net Profit ÷ Billing) × 100</strong>. Measures site operational efficiency. Healthy &ge; 20%, Moderate 5–20%, Critical &lt; 5%.</p>
                 </div>
             </div>
         </div>
@@ -2933,7 +2932,7 @@ window.closeSiteDetailModal = function() {
 };
 
 /**
- * â”€â”€ METRIC FORMULA & DEFINITIONS GUIDE MODAL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+ * ── METRIC FORMULA & DEFINITIONS GUIDE MODAL ─────────────────────────
  */
 window.openMetricGuideModal = function(targetMetric = 'all') {
     const guideHtml = `
@@ -2990,7 +2989,7 @@ window.openMetricGuideModal = function(targetMetric = 'all') {
                 </p>
                 <div class="bg-gray-950 p-2.5 rounded border border-gray-800 font-mono text-[11px] text-emerald-300 space-y-1">
                     <div>Total Cost = Manpower Expense + Material Consumption</div>
-                    <div>Net Profit = Billing âˆ’ Total Operating Cost</div>
+                    <div>Net Profit = Billing − Total Operating Cost</div>
                 </div>
             </div>
 
@@ -3003,7 +3002,7 @@ window.openMetricGuideModal = function(targetMetric = 'all') {
                     <strong>What it is:</strong> The percentage of billing converted into net profit. Indicates operational profitability and pricing health.
                 </p>
                 <div class="bg-gray-950 p-2.5 rounded border border-gray-800 font-mono text-[11px] text-amber-300">
-                    Gross Margin % = (Net Profit Ã· Billing) Ã— 100
+                    Gross Margin % = (Net Profit ÷ Billing) × 100
                 </div>
                 <div class="grid grid-cols-3 gap-2 text-[10px] font-bold mt-2">
                     <div class="p-2 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-center">
@@ -3012,7 +3011,7 @@ window.openMetricGuideModal = function(targetMetric = 'all') {
                     </div>
                     <div class="p-2 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30 text-center">
                         <div>Moderate</div>
-                        <div>5% â€“ 20% Margin</div>
+                        <div>5% – 20% Margin</div>
                     </div>
                     <div class="p-2 rounded bg-red-500/20 text-red-400 border border-red-500/30 text-center">
                         <div>Critical</div>
@@ -3030,7 +3029,7 @@ window.openMetricGuideModal = function(targetMetric = 'all') {
                     <strong>What it is:</strong> Tells you what percentage of site billing is spent on material consumption alone.
                 </p>
                 <div class="bg-gray-950 p-2.5 rounded border border-gray-800 font-mono text-[11px] text-indigo-300">
-                    Consumption / Billing % = (Consumption Value Ã· Site Billing) Ã— 100
+                    Consumption / Billing % = (Consumption Value ÷ Site Billing) × 100
                 </div>
                 <p class="text-[11px] text-amber-400 italic mt-1">
                     * If Consumption / Billing &ge; 7%, the site is flagged with a HIGH Consumption Alert so managers can investigate potential material waste or leakage.
@@ -3129,7 +3128,7 @@ window.updateDashboardCharts = function(sites) {
                     y: {
                         ticks: { 
                             color: '#9ca3af',
-                            callback: function(val) { return 'â‚¹' + (val / 100000).toFixed(1) + 'L'; }
+                            callback: function(val) { return '₹' + (val / 100000).toFixed(1) + 'L'; }
                         },
                         grid: { color: '#1f2937' }
                     }
@@ -3249,7 +3248,7 @@ window.updateMonthlyTrendsChart = function(monthlyTotals) {
                 y: {
                     ticks: { 
                         color: '#9ca3af',
-                        callback: function(val) { return 'â‚¹' + (val / 100000).toFixed(1) + 'L'; }
+                        callback: function(val) { return '₹' + (val / 100000).toFixed(1) + 'L'; }
                     },
                     grid: { color: '#1f2937' }
                 }
@@ -3469,7 +3468,7 @@ window.downloadSpecificMonthReport = function(targetMonth) {
  * Called by the modal "Generate & Download Excel" button.
  * Reads the selected report type (REGION / DETAILED / SPECIFIC / WORKBOOK)
  * and target month from the modal, then exports the right Excel workbook.
- * 100% client-side â€“ nothing leaves the browser.
+ * 100% client-side – nothing leaves the browser.
  */
 window.executeSelectedReportExport = function () {
     // 1. Read modal selections
@@ -3504,7 +3503,7 @@ window.executeSelectedReportExport = function () {
     const today        = new Date().toISOString().slice(0, 10);
     const wb           = XLSX.utils.book_new();
 
-    /* â”€â”€ helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ── helpers ─────────────────────────────────────────────────────── */
     function buildRegionRows(dataset) {
         const map = {};
         dataset.forEach(s => {
@@ -3566,7 +3565,7 @@ window.executeSelectedReportExport = function () {
         });
     }
 
-    /* â”€â”€ export logic per type â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ── export logic per type ───────────────────────────────────────── */
     if (selectedType === 'REGION') {
         const rRows = buildRegionRows(sites);
         const hRows = buildHighRows(sites);
@@ -3592,7 +3591,7 @@ window.executeSelectedReportExport = function () {
         XLSX.writeFile(wb, `${regionPrefix}Specific_Report${regionTag}${managerTag}${statusTag}_${monthLabel}_${today}.xlsx`);
 
     } else if (selectedType === 'ANALYSIS_REGION') {
-        // â”€â”€ Region Consumption Analysis (mirrors Tab 2) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ── Region Consumption Analysis (mirrors Tab 2) ───────────────
         const regionMap = {};
         sites.forEach(s => {
             if (!regionMap[s.region]) regionMap[s.region] = { sites: [], totalBilling: 0, totalConsumption: 0, totalExpense: 0 };
@@ -3612,7 +3611,7 @@ window.executeSelectedReportExport = function () {
                 'Total Billing': rg.totalBilling, 'Total Manpower Expense': rg.totalExpense,
                 'Total Consumption Value': rg.totalConsumption, 'Net Profit': net,
                 'Gross Margin %': rg.totalBilling > 0 ? ((net / rg.totalBilling) * 100).toFixed(2) + '%' : '0%',
-                [`Sites â‰¥${thresholdPct}% Cons/Billing`]: flaggedCount
+                [`Sites ≥${thresholdPct}% Cons/Billing`]: flaggedCount
             };
         });
 
@@ -3634,7 +3633,7 @@ window.executeSelectedReportExport = function () {
                         'Consumption Value': s.activeConsumption,
                         'Consumption / Billing (%)': billShare + '%',
                         'Share of Region (%)': share + '%',
-                        'Alert': `â‰¥${thresholdPct}% Cons/Billing â€” HIGH`
+                        'Alert': `≥${thresholdPct}% Cons/Billing — HIGH`
                     });
                 });
         });
@@ -3642,15 +3641,15 @@ window.executeSelectedReportExport = function () {
         const wsA = XLSX.utils.json_to_sheet(regSummaryRows.length > 0 ? regSummaryRows : [{ Status: 'No data.' }]);
         XLSX.utils.book_append_sheet(wb, wsA, 'Region Summary');
         const wsB = XLSX.utils.json_to_sheet(siteRows.length > 0 ? siteRows : [{ Status: `No sites exceed ${thresholdPct}% threshold for ${modalMonth}.` }]);
-        XLSX.utils.book_append_sheet(wb, wsB, `Sites â‰¥${thresholdPct}% Cons-Billing`);
+        XLSX.utils.book_append_sheet(wb, wsB, `Sites ≥${thresholdPct}% Cons-Billing`);
         XLSX.writeFile(wb, `${regionPrefix}Analysis_RegionConsumption_${monthLabel}_${today}.xlsx`);
 
     } else if (selectedType === 'ANALYSIS_FINANCIAL') {
-        // â”€â”€ Financial & Profitability Analysis (mirrors Tab 3) â”€â”€â”€â”€â”€â”€â”€â”€
+        // ── Financial & Profitability Analysis (mirrors Tab 3) ────────
         const finRows = sites.map(s => {
             let healthStatus;
-            if ((s.activeGrossMargin || 0) >= 20)       healthStatus = 'Healthy (â‰¥20%)';
-            else if ((s.activeGrossMargin || 0) >= 5)   healthStatus = 'Moderate (5â€“20%)';
+            if ((s.activeGrossMargin || 0) >= 20)       healthStatus = 'Healthy (≥20%)';
+            else if ((s.activeGrossMargin || 0) >= 5)   healthStatus = 'Moderate (5–20%)';
             else                                         healthStatus = 'Critical (<5%)';
             return {
                 'Site Code': s.siteCode, 'Site Name': s.siteName, Region: s.region,
@@ -3669,7 +3668,7 @@ window.executeSelectedReportExport = function () {
         const totalCons     = sites.reduce((t, s) => t + (s.activeConsumption || 0), 0);
         const totalProfit   = totalBilling - (totalExpense + totalCons);
         const summaryRow = [{
-            'Site Code': 'â”€â”€ PORTFOLIO TOTALS â”€â”€', 'Site Name': '', Region: '', 'Customer Group': '',
+            'Site Code': '── PORTFOLIO TOTALS ──', 'Site Name': '', Region: '', 'Customer Group': '',
             'Site Status': '', Manager: '', 'Sr Manager': '', Month: modalMonth,
             Billing: totalBilling, 'Manpower Expense': totalExpense,
             'Consumption Value': totalCons, 'Net Profit': totalProfit,
@@ -3682,7 +3681,7 @@ window.executeSelectedReportExport = function () {
         XLSX.writeFile(wb, `${regionPrefix}Analysis_Financial_Profitability_${monthLabel}_${today}.xlsx`);
 
     } else if (selectedType === 'ANALYSIS_HIERARCHY') {
-        // â”€â”€ Management Hierarchy Analysis (mirrors Tab 4) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ── Management Hierarchy Analysis (mirrors Tab 4) ─────────────
         const srMap = {};
         sites.forEach(s => {
             const sr  = s.srManager || 'Unassigned';
@@ -3722,7 +3721,7 @@ window.executeSelectedReportExport = function () {
                     'Gross Margin %': mBill > 0 ? ((mNet / mBill) * 100).toFixed(2) + '%' : '0%' });
                 // Then individual site rows indented
                 mSites.forEach(s => mgrRows.push({
-                    'Sr Manager': '',  Manager: `   â†³ ${s.siteCode}`, Month: modalMonth,
+                    'Sr Manager': '',  Manager: `   ↳ ${s.siteCode}`, Month: modalMonth,
                     Sites: '', Billing: s.activeBilling, 'Manpower Expense': s.activeExpense,
                     'Consumption Value': s.activeConsumption, 'Net Profit': s.activeNetProfit,
                     'Gross Margin %': (s.activeGrossMargin || 0) + '%'
@@ -3737,7 +3736,7 @@ window.executeSelectedReportExport = function () {
         XLSX.writeFile(wb, `${regionPrefix}Analysis_ManagementHierarchy_${monthLabel}_${today}.xlsx`);
 
     } else if (selectedType === 'ANALYSIS_TRENDS') {
-        // â”€â”€ Monthly Trends Analysis (mirrors Tab 5) â”€ always all months
+        // ── Monthly Trends Analysis (mirrors Tab 5) ─ always all months
         const allSites = window.activeDataset || sites;
         const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug'];
         const monthFull = { Jan:'January', Feb:'February', Mar:'March', Apr:'April', May:'May', Jun:'June', Jul:'July', Aug:'August' };
@@ -3758,11 +3757,11 @@ window.executeSelectedReportExport = function () {
         }).filter(r => r['Total Billing'] > 0 || r['Total Manpower Expense'] > 0);
 
         const wsT = XLSX.utils.json_to_sheet(trendRows.length > 0 ? trendRows : [{ Status: 'No monthly data found.' }]);
-        XLSX.utils.book_append_sheet(wb, wsT, 'Monthly Trends Janâ€“Aug');
+        XLSX.utils.book_append_sheet(wb, wsT, 'Monthly Trends Jan–Aug');
         XLSX.writeFile(wb, `${regionPrefix}Analysis_MonthlyTrends_${today}.xlsx`);
 
     } else if (selectedType === 'ANALYSIS_OVERVIEW') {
-        // â”€â”€ Executive KPI Overview (mirrors Tab 1 KPI cards) â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ── Executive KPI Overview (mirrors Tab 1 KPI cards) ─────────
         const totalBilling = sites.reduce((t, s) => t + (s.activeBilling    || 0), 0);
         const totalExpense  = sites.reduce((t, s) => t + (s.activeExpense    || 0), 0);
         const totalCons     = sites.reduce((t, s) => t + (s.activeConsumption|| 0), 0);
@@ -3775,14 +3774,14 @@ window.executeSelectedReportExport = function () {
         const kpiRows = [
             { 'KPI Metric': 'Report Month', Value: modalMonth, Notes: 'Selected reporting period' },
             { 'KPI Metric': 'Total Active Sites', Value: sites.length, Notes: 'Sites in current filter selection' },
-            { 'KPI Metric': 'Total Billing', Value: totalBilling, Notes: 'â‚¹ sum of all site billings' },
-            { 'KPI Metric': 'Total Manpower Expense', Value: totalExpense, Notes: 'â‚¹ sum of all manpower costs' },
-            { 'KPI Metric': 'Total Consumption Value', Value: totalCons, Notes: 'â‚¹ sum of material consumption' },
+            { 'KPI Metric': 'Total Billing', Value: totalBilling, Notes: '₹ sum of all site billings' },
+            { 'KPI Metric': 'Total Manpower Expense', Value: totalExpense, Notes: '₹ sum of all manpower costs' },
+            { 'KPI Metric': 'Total Consumption Value', Value: totalCons, Notes: '₹ sum of material consumption' },
             { 'KPI Metric': 'Total Cost (Expense + Consumption)', Value: totalExpense + totalCons, Notes: 'Combined operational cost' },
-            { 'KPI Metric': 'Net Profit', Value: totalProfit, Notes: 'Billing âˆ’ Total Cost' },
-            { 'KPI Metric': 'Portfolio Gross Margin %', Value: overallMargin + '%', Notes: '(Net Profit / Billing) Ã— 100' },
-            { 'KPI Metric': `High Consumption Sites (â‰¥${thresholdPct}% of billing)`, Value: highSites, Notes: 'Sites flagged for high consumption relative to billing' },
-            { 'KPI Metric': 'Healthy Sites (Margin â‰¥20%)', Value: healthySites, Notes: 'Sites with strong gross margin' },
+            { 'KPI Metric': 'Net Profit', Value: totalProfit, Notes: 'Billing − Total Cost' },
+            { 'KPI Metric': 'Portfolio Gross Margin %', Value: overallMargin + '%', Notes: '(Net Profit / Billing) × 100' },
+            { 'KPI Metric': `High Consumption Sites (≥${thresholdPct}% of billing)`, Value: highSites, Notes: 'Sites flagged for high consumption relative to billing' },
+            { 'KPI Metric': 'Healthy Sites (Margin ≥20%)', Value: healthySites, Notes: 'Sites with strong gross margin' },
             { 'KPI Metric': 'Critical Sites (Margin <5%)', Value: criticalSites, Notes: 'Sites needing urgent review' },
             { 'KPI Metric': 'Threshold Used', Value: thresholdPct + '%', Notes: 'Consumption/Billing threshold setting' },
         ];
@@ -3793,7 +3792,7 @@ window.executeSelectedReportExport = function () {
 
     } else {
 
-        // WORKBOOK â€“ full 5-sheet executive workbook
+        // WORKBOOK – full 5-sheet executive workbook
         const allSites = window.activeDataset || sites;
         const hRows  = buildHighRows(allSites);
         const rRows  = buildRegionRows(allSites);
@@ -3838,8 +3837,8 @@ window.executeSelectedReportExport = function () {
 
 if (typeof window.formatRupee !== 'function') {
     window.formatRupee = function(amount) {
-        if (isNaN(amount) || amount === null || amount === undefined) return "â‚¹0";
-        return "â‚¹" + Math.round(amount).toLocaleString('en-IN');
+        if (isNaN(amount) || amount === null || amount === undefined) return "₹0";
+        return "₹" + Math.round(amount).toLocaleString('en-IN');
     };
 }
 
@@ -3895,13 +3894,13 @@ window.handleFileUpload = function(event) {
     if (!file) return;
 
     // Immediate user alert feedback
-    alert("ðŸ“„ Selected file: " + file.name + " (" + Math.round(file.size / 1024) + " KB)\n\nParsing site records now... Please wait.");
+    alert("📄 Selected file: " + file.name + " (" + Math.round(file.size / 1024) + " KB)\n\nParsing site records now... Please wait.");
 
     const titleEl = document.getElementById('datasetTitle');
     if (titleEl) titleEl.innerText = `Processing Excel file: ${file.name}... Please wait...`;
 
     window.parseExcelFile(file, (processedData, fileName) => {
-        alert("âœ… Successfully loaded " + processedData.length + " sites from " + fileName + "!");
+        alert("✅ Successfully loaded " + processedData.length + " sites from " + fileName + "!");
         if (titleEl) titleEl.innerText = `Uploaded: ${fileName} (${processedData.length} Sites)`;
         window.setActiveDataset(processedData, fileName, true);
         
@@ -3965,7 +3964,7 @@ window.openPasteModal = function() {
     const modal = document.getElementById('pasteImportModal');
     if (modal) {
         modal.classList.remove('hidden');
-        // Default to Paste Data â€” Direct Link doesn't work for corporate SharePoint
+        // Default to Paste Data — Direct Link doesn't work for corporate SharePoint
         switchImportTab('paste');
     }
 };
@@ -4009,7 +4008,7 @@ window.switchImportTab = function(tab) {
     }
 };
 
-/** Unified submit â€” dispatches to URL or Paste handler depending on active tab */
+/** Unified submit — dispatches to URL or Paste handler depending on active tab */
 window.handleOneDriveImportSubmit = function() {
     const linkTabVisible = !document.getElementById('importTabLink')?.classList.contains('hidden');
     if (linkTabVisible) {
@@ -4029,7 +4028,7 @@ window.submitUrlImport = function() {
     // Warn upfront if this looks like a corporate SharePoint link
     if (url.includes('sharepoint.com') && url.includes('/p/')) {
         const proceed = confirm(
-            "âš ï¸ Corporate SharePoint links usually cannot be fetched directly due to login restrictions (CORS).\n\n" +
+            "⚠️ Corporate SharePoint links usually cannot be fetched directly due to login restrictions (CORS).\n\n" +
             "This may hang or fail. It is recommended to use the \"Paste Data\" tab instead.\n\n" +
             "Click OK to try anyway, or Cancel to switch to Paste Data."
         );
@@ -4052,9 +4051,9 @@ window.submitUrlImport = function() {
         if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = '<i class="fa-solid fa-cloud-arrow-down"></i><span>Load from OneDrive Link</span>'; }
         if (statusBox) { statusBox.classList.add('hidden'); }
         alert(
-            "â±ï¸ The link took too long to respond and was cancelled.\n\n" +
+            "⏱️ The link took too long to respond and was cancelled.\n\n" +
             "This usually means the file requires a company login (corporate SharePoint).\n\n" +
-            "âœ… Please use the \"Paste Data\" tab instead:\n" +
+            "✅ Please use the \"Paste Data\" tab instead:\n" +
             "1. Open the file in OneDrive/SharePoint in your browser\n" +
             "2. Press Ctrl+A then Ctrl+C to copy all data\n" +
             "3. Switch to Paste Data tab and paste there"
@@ -4421,7 +4420,7 @@ function renderMasterTable(sites) {
             <tr id="loadMoreMasterRow">
                 <td colspan="14" class="py-4 text-center bg-gray-900/60">
                     <button onclick="loadAllMasterRows()" class="px-5 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs shadow-lg transition">
-                        âš¡ Showing first ${limit} of ${sites.length} sites â€” Click to load all ${sites.length} rows
+                        ⚡ Showing first ${limit} of ${sites.length} sites — Click to load all ${sites.length} rows
                     </button>
                 </td>
             </tr>
@@ -4458,11 +4457,10 @@ window.searchMasterTable = function() {
 
 </script>
 
-    
-    
-    
-    
-    
+
+
+
+
 
 
 
