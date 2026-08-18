@@ -1459,11 +1459,16 @@ window.parseExcelFile = function(file, callback) {
                     const prevRow = headerRowIdx > 0 ? allRows[headerRowIdx - 1] : null;
                     const colIndexMap = {};
 
+                    let lastParentH = '';
                     rawHeaders.forEach((h, colIdx) => {
                         let hClean = String(h || '').trim();
-                        let parentH = prevRow && prevRow[colIdx] ? String(prevRow[colIdx]).trim() : '';
+                        let currentParent = prevRow && prevRow[colIdx] ? String(prevRow[colIdx]).trim() : '';
+                        if (currentParent && currentParent !== '__EMPTY' && !currentParent.toLowerCase().includes('site') && !currentParent.toLowerCase().includes('sno') && !currentParent.toLowerCase().includes('code')) {
+                            lastParentH = currentParent;
+                        }
+                        let parentH = currentParent || lastParentH;
 
-                        if (parentH && parentH !== hClean && !parentH.toLowerCase().includes('site') && !parentH.toLowerCase().includes('sno')) {
+                        if (parentH && parentH !== hClean && !parentH.toLowerCase().includes('site') && !parentH.toLowerCase().includes('sno') && !parentH.toLowerCase().includes('code')) {
                             if (hClean && hClean !== '__EMPTY') {
                                 hClean = `${parentH}_${hClean}`;
                             } else if (parentH) {
@@ -1687,20 +1692,26 @@ window.normalizeRawData = function(rows, customMapping = null) {
             const kLower = k.trim().toLowerCase();
             const matchesMonth = mp.keys.some(mk => kLower.includes(mk));
             if (matchesMonth) {
-                if (kLower.includes('bill') || kLower.includes('revenue') || kLower.includes('invoic')) bCol = k;
-                else if (kLower.includes('exp') || kLower.includes('manpower') || kLower.includes('salary') || kLower.includes('wage')) eCol = k;
-                else if (kLower.includes('consum') || kLower.includes('value') || kLower.includes('material') || kLower.includes('suppli') || kLower.includes('replace') || kLower.includes('repl')) cCol = k;
+                if (kLower.includes('bill') || kLower.includes('revenue') || kLower.includes('invoic') || kLower.includes('sales') || kLower.includes('amt') || kLower.includes('amount')) {
+                    bCol = k;
+                } else if (kLower.includes('exp') || kLower.includes('manpower') || kLower.includes('salary') || kLower.includes('wage') || kLower.includes('cost') || kLower.includes('labor')) {
+                    eCol = k;
+                } else if (kLower.includes('consum') || kLower.includes('value') || kLower.includes('material') || kLower.includes('suppli') || kLower.includes('replace') || kLower.includes('repl') || kLower.includes('spare')) {
+                    cCol = k;
+                } else {
+                    // Fallback: If header is JUST the month name (e.g. "JULY 2026" or "AUG 26")
+                    if (!bCol) bCol = k;
+                }
             }
         });
 
         if (bCol || eCol || cCol) {
-            // Try to detect which year this month belongs to from the column name
             let yearLabel = '';
             const anyCol = bCol || eCol || cCol;
             const yearMatch = anyCol.match(/20\d{2}/);
             if (yearMatch) yearLabel = ' ' + yearMatch[0];
 
-            const monthKey = mp.name + yearLabel; // e.g. "Jan 2026" or "Sep 2027"
+            const monthKey = mp.name + yearLabel; // e.g. "Jan 2026" or "Jul 2026"
             detectedMonthNames.push(monthKey);
             monthsDetected.push({
                 name: monthKey,
@@ -4339,10 +4350,17 @@ window.applyFilters = function() {
         let eVal = s.totalExpense;
         let cVal = s.totalConsumption;
 
-        if (monthVal !== 'ALL' && s.monthlyMetrics && s.monthlyMetrics[monthVal]) {
-            bVal = s.monthlyMetrics[monthVal].billing;
-            eVal = s.monthlyMetrics[monthVal].expense;
-            cVal = s.monthlyMetrics[monthVal].consumption;
+        if (monthVal !== 'ALL' && s.monthlyMetrics) {
+            let mData = s.monthlyMetrics[monthVal];
+            if (!mData) {
+                const foundKey = Object.keys(s.monthlyMetrics).find(k => k.toLowerCase().startsWith(monthVal.toLowerCase()) || monthVal.toLowerCase().startsWith(k.toLowerCase()));
+                if (foundKey) mData = s.monthlyMetrics[foundKey];
+            }
+            if (mData) {
+                bVal = mData.billing;
+                eVal = mData.expense;
+                cVal = mData.consumption;
+            }
         }
 
         const netProf = bVal - (eVal + cVal);
