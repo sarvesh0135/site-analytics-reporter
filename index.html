@@ -1662,18 +1662,18 @@ window.normalizeRawData = function(rows, customMapping = null) {
     // Auto-detects year from column headers (2026, 2027, etc.)
     const monthsDetected = [];
     const monthPatterns = [
-        { name: 'Jan', keys: ['jan', 'january', '01/', '01-', '/01/', '-01-', '1/', '1-'] },
-        { name: 'Feb', keys: ['feb', 'february', '02/', '02-', '/02/', '-02-', '2/', '2-'] },
-        { name: 'Mar', keys: ['mar', 'march', '03/', '03-', '/03/', '-03-', '3/', '3-'] },
-        { name: 'Apr', keys: ['apr', 'april', '04/', '04-', '/04/', '-04-', '4/', '4-'] },
-        { name: 'May', keys: ['may', '05/', '05-', '/05/', '-05-', '5/', '5-'] },
-        { name: 'Jun', keys: ['jun', 'june', '06/', '06-', '/06/', '-06-', '6/', '6-'] },
-        { name: 'Jul', keys: ['jul', 'july', '07/', '07-', '/07/', '-07-', '7/', '7-'] },
-        { name: 'Aug', keys: ['aug', 'august', '08/', '08-', '/08/', '-08-', '8/', '8-'] },
-        { name: 'Sep', keys: ['sep', 'sept', 'september', '09/', '09-', '/09/', '-09-', '9/', '9-'] },
-        { name: 'Oct', keys: ['oct', 'october', '10/', '10-', '/10/', '-10-'] },
-        { name: 'Nov', keys: ['nov', 'november', '11/', '11-', '/11/', '-11-'] },
-        { name: 'Dec', keys: ['dec', 'december', '12/', '12-', '/12/', '-12-'] }
+        { name: 'Jan', keys: ['jan', 'january', '01/', '01-', '/01/', '-01-', '01_', '_01_', '1/', '1-', '/1/', '-1-', '1_', '_1_', '2026-01', '2027-01', 'month 1', 'month-1', 'm01', 'm1'] },
+        { name: 'Feb', keys: ['feb', 'february', '02/', '02-', '/02/', '-02-', '02_', '_02_', '2/', '2-', '/2/', '-2-', '2_', '_2_', '2026-02', '2027-02', 'month 2', 'month-2', 'm02', 'm2'] },
+        { name: 'Mar', keys: ['mar', 'march', '03/', '03-', '/03/', '-03-', '03_', '_03_', '3/', '3-', '/3/', '-3-', '3_', '_3_', '2026-03', '2027-03', 'month 3', 'month-3', 'm03', 'm3'] },
+        { name: 'Apr', keys: ['apr', 'april', '04/', '04-', '/04/', '-04-', '04_', '_04_', '4/', '4-', '/4/', '-4-', '4_', '_4_', '2026-04', '2027-04', 'month 4', 'month-4', 'm04', 'm4'] },
+        { name: 'May', keys: ['may', '05/', '05-', '/05/', '-05-', '05_', '_05_', '5/', '5-', '/5/', '-5-', '5_', '_5_', '2026-05', '2027-05', 'month 5', 'month-5', 'm05', 'm5'] },
+        { name: 'Jun', keys: ['jun', 'june', '06/', '06-', '/06/', '-06-', '06_', '_06_', '6/', '6-', '/6/', '-6-', '6_', '_6_', '2026-06', '2027-06', 'month 6', 'month-6', 'm06', 'm6'] },
+        { name: 'Jul', keys: ['jul', 'july', '07/', '07-', '/07/', '-07-', '07_', '_07_', '7/', '7-', '/7/', '-7-', '7_', '_7_', '2026-07', '2027-07', 'month 7', 'month-7', 'm07', 'm7'] },
+        { name: 'Aug', keys: ['aug', 'august', '08/', '08-', '/08/', '-08-', '08_', '_08_', '8/', '8-', '/8/', '-8-', '8_', '_8_', '2026-08', '2027-08', 'month 8', 'month-8', 'm08', 'm8'] },
+        { name: 'Sep', keys: ['sep', 'sept', 'september', '09/', '09-', '/09/', '-09-', '09_', '_09_', '9/', '9-', '/9/', '-9-', '9_', '_9_', '2026-09', '2027-09', 'month 9', 'month-9', 'm09', 'm9'] },
+        { name: 'Oct', keys: ['oct', 'october', '10/', '10-', '/10/', '-10-', '10_', '_10_', '2026-10', '2027-10', 'month 10', 'month-10', 'm10'] },
+        { name: 'Nov', keys: ['nov', 'november', '11/', '11-', '/11/', '-11-', '11_', '_11_', '2026-11', '2027-11', 'month 11', 'month-11', 'm11'] },
+        { name: 'Dec', keys: ['dec', 'december', '12/', '12-', '/12/', '-12-', '12_', '_12_', '2026-12', '2027-12', 'month 12', 'month-12', 'm12'] }
     ];
 
     // Auto-detect years present in column headers (e.g. 2026, 2027)
@@ -4293,11 +4293,15 @@ function populateFilterDropdowns(sites) {
     const regions = new Set();
     const statuses = new Set();
     const srManagers = new Set();
+    const monthsSet = new Set(window.MONTH_NAMES || []);
 
     sites.forEach(s => {
         if (s.region) regions.add(s.region);
         if (s.siteStatus) statuses.add(s.siteStatus);
         if (s.srManager) srManagers.add(s.srManager);
+        if (s.monthlyMetrics) {
+            Object.keys(s.monthlyMetrics).forEach(m => monthsSet.add(m));
+        }
     });
 
     selRegion.innerHTML = '<option value="ALL">All Regions</option>' + 
@@ -4310,9 +4314,12 @@ function populateFilterDropdowns(sites) {
         Array.from(srManagers).sort().map(sr => `<option value="${sr}">${sr}</option>`).join('');
 
     // Dynamically populate month filter from detected months in the uploaded file
-    if (selMonth && window.MONTH_NAMES && window.MONTH_NAMES.length > 0) {
-        selMonth.innerHTML = '<option value="ALL">All Months (Total/Avg)</option>' +
-            window.MONTH_NAMES.map(m => `<option value="${m}">${m}</option>`).join('');
+    if (selMonth) {
+        const sortedMonths = Array.from(monthsSet);
+        if (sortedMonths.length > 0) {
+            selMonth.innerHTML = '<option value="ALL">All Months (Total/Avg)</option>' +
+                sortedMonths.map(m => `<option value="${m}">${m}</option>`).join('');
+        }
     }
 }
 
