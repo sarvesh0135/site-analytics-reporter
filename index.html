@@ -144,6 +144,11 @@
                     <span>Calculation Guide</span>
                 </button>
 
+                <button onclick="showColumnMappingModal()" class="px-3 py-2 text-xs font-semibold rounded-lg bg-gray-800 hover:bg-gray-700 text-amber-300 border border-amber-500/30 transition flex items-center gap-2 shadow-sm" title="Map columns for custom Excel formats">
+                    <i class="fa-solid fa-sliders text-amber-400"></i>
+                    <span>Map Columns</span>
+                </button>
+
                 <label for="excelFileInput" class="cursor-pointer px-4 py-2 text-xs font-semibold rounded-lg bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white transition flex items-center gap-2 shadow-md shadow-brand-600/30">
                     <i class="fa-solid fa-file-excel"></i>
                     <span>Upload Excel File</span>
@@ -311,14 +316,6 @@
                             </label>
                             <select id="filterMonth" onchange="applyFilters()" class="bg-amber-500/10 text-amber-300 font-bold border border-amber-500/40 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-amber-400">
                                 <option value="ALL">All Months (Total/Avg)</option>
-                                <option value="Jan">January 2026</option>
-                                <option value="Feb">February 2026</option>
-                                <option value="Mar">March 2026</option>
-                                <option value="Apr">April 2026</option>
-                                <option value="May">May 2026</option>
-                                <option value="Jun">June 2026</option>
-                                <option value="Jul">July 2026</option>
-                                <option value="Aug">August 2026</option>
                             </select>
                         </div>
 
@@ -1191,8 +1188,80 @@
         </div>
     </div>
 
-    <!-- Modular Application Logic Scripts -->
-    
+    <!-- ═══════════════════════════════════════════════════════════
+         COLUMN MAPPING MODAL — Shown for unrecognized Excel formats
+         ═══════════════════════════════════════════════════════════ -->
+    <div id="columnMappingModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+        <div class="glass-panel rounded-2xl w-full max-w-3xl border border-amber-500/30 shadow-2xl shadow-amber-900/30 max-h-[90vh] overflow-y-auto">
+            <div class="px-6 py-4 border-b border-gray-800 flex items-center justify-between sticky top-0 bg-gray-900/95 rounded-t-2xl z-10">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-lg bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                        <i class="fa-solid fa-sliders"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-white">Map Your Excel Columns</h3>
+                        <p class="text-xs text-gray-400">We detected a different format. Tell the app which column means what.</p>
+                    </div>
+                </div>
+                <button onclick="closeColumnMappingModal()" class="text-gray-500 hover:text-white text-xl"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div class="px-6 py-5 space-y-4">
+                <div class="bg-amber-500/10 border border-amber-500/30 rounded-xl px-4 py-3 text-xs text-amber-300 flex items-start gap-2">
+                    <i class="fa-solid fa-circle-info mt-0.5 flex-shrink-0"></i>
+                    <span>We detected a <strong>non-standard column format</strong>. Please map your columns below. Mapping will be saved for future uploads of this format.</span>
+                </div>
+
+                <div>
+                    <p class="text-xs font-bold text-gray-300 mb-2">Columns detected in your file:</p>
+                    <div id="detectedColumnsList" class="flex flex-wrap gap-1.5 text-[11px] text-gray-300"></div>
+                </div>
+
+                <hr class="border-gray-800">
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                    <div class="space-y-2">
+                        <p class="text-brand-400 font-bold text-[11px] uppercase tracking-wider">📋 Site Information</p>
+                        <div class="space-y-2">
+                            <div class="flex items-center gap-2"><label class="text-gray-400 w-32 flex-shrink-0">Site Code:</label><select id="mapSiteCode" class="flex-1 bg-gray-800 text-gray-200 border border-gray-700 rounded px-2 py-1 text-xs focus:outline-none focus:border-brand-500"></select></div>
+                            <div class="flex items-center gap-2"><label class="text-gray-400 w-32 flex-shrink-0">Site Name:</label><select id="mapSiteName" class="flex-1 bg-gray-800 text-gray-200 border border-gray-700 rounded px-2 py-1 text-xs focus:outline-none focus:border-brand-500"></select></div>
+                            <div class="flex items-center gap-2"><label class="text-gray-400 w-32 flex-shrink-0">Region:</label><select id="mapRegion" class="flex-1 bg-gray-800 text-gray-200 border border-gray-700 rounded px-2 py-1 text-xs focus:outline-none focus:border-brand-500"></select></div>
+                            <div class="flex items-center gap-2"><label class="text-gray-400 w-32 flex-shrink-0">Customer Group:</label><select id="mapCustGroup" class="flex-1 bg-gray-800 text-gray-200 border border-gray-700 rounded px-2 py-1 text-xs focus:outline-none focus:border-brand-500"></select></div>
+                            <div class="flex items-center gap-2"><label class="text-gray-400 w-32 flex-shrink-0">Site Status:</label><select id="mapStatus" class="flex-1 bg-gray-800 text-gray-200 border border-gray-700 rounded px-2 py-1 text-xs focus:outline-none focus:border-brand-500"></select></div>
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <p class="text-emerald-400 font-bold text-[11px] uppercase tracking-wider">💰 Financial Totals</p>
+                        <div class="space-y-2">
+                            <div class="flex items-center gap-2"><label class="text-gray-400 w-32 flex-shrink-0">Billing / Revenue:</label><select id="mapBilling" class="flex-1 bg-gray-800 text-gray-200 border border-gray-700 rounded px-2 py-1 text-xs focus:outline-none focus:border-brand-500"></select></div>
+                            <div class="flex items-center gap-2"><label class="text-gray-400 w-32 flex-shrink-0">Manpower Expense:</label><select id="mapExpense" class="flex-1 bg-gray-800 text-gray-200 border border-gray-700 rounded px-2 py-1 text-xs focus:outline-none focus:border-brand-500"></select></div>
+                            <div class="flex items-center gap-2"><label class="text-gray-400 w-32 flex-shrink-0">Replacement / Consumption:</label><select id="mapConsumption" class="flex-1 bg-gray-800 text-gray-200 border border-gray-700 rounded px-2 py-1 text-xs focus:outline-none focus:border-brand-500"></select></div>
+                        </div>
+                        <p class="text-purple-400 font-bold text-[11px] uppercase tracking-wider pt-2">👤 Management</p>
+                        <div class="space-y-2">
+                            <div class="flex items-center gap-2"><label class="text-gray-400 w-32 flex-shrink-0">Manager:</label><select id="mapManager" class="flex-1 bg-gray-800 text-gray-200 border border-gray-700 rounded px-2 py-1 text-xs focus:outline-none focus:border-brand-500"></select></div>
+                            <div class="flex items-center gap-2"><label class="text-gray-400 w-32 flex-shrink-0">Sr Manager:</label><select id="mapSrManager" class="flex-1 bg-gray-800 text-gray-200 border border-gray-700 rounded px-2 py-1 text-xs focus:outline-none focus:border-brand-500"></select></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 text-xs pt-1">
+                    <input type="checkbox" id="saveMappingCheck" checked class="accent-brand-500">
+                    <label for="saveMappingCheck" class="text-gray-400">Remember this column mapping for future uploads of the same format</label>
+                </div>
+            </div>
+
+            <div class="px-6 py-4 border-t border-gray-800 flex items-center justify-between bg-gray-900/40 rounded-b-2xl">
+                <button onclick="closeColumnMappingModal()" class="px-4 py-2 text-xs font-semibold rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-700 transition">Cancel &mdash; Try Auto-Detect</button>
+                <button onclick="applyColumnMapping()" class="px-5 py-2 text-xs font-bold rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white shadow-lg shadow-amber-600/30 transition flex items-center gap-2">
+                    <i class="fa-solid fa-check-circle"></i>
+                    <span>Apply Mapping &amp; Load Data</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+
 <script>
 /**
  * Generator for realistic benchmark sample data matching user's exact schema.
@@ -1466,6 +1535,10 @@ window.parseExcelFile = function(file, callback) {
                 s.sno = idx + 1;
             });
 
+            // Store raw rows for Column Mapping UI re-adjustment
+            window.currentRawRows = masterSheet ? masterSheet.rawJson : sheetResults[0].rawJson;
+            window.currentRawFileName = loadedSourceName;
+
             console.log(`[Parser] Successfully loaded ${finalSites.length} sites from file '${file.name}'`);
             callback(finalSites, loadedSourceName);
 
@@ -1485,37 +1558,37 @@ window.parseExcelFile = function(file, callback) {
 
 
 
-window.normalizeRawData = function(rows) {
+window.normalizeRawData = function(rows, customMapping = null) {
     if (!rows || rows.length === 0) return [];
 
     // Extract headers from first row keys
     const sample = rows[0];
     const keys = Object.keys(sample);
 
+    // Check for saved column mapping if none passed explicitly
+    if (!customMapping) {
+        try {
+            const saved = localStorage.getItem('site_analytics_custom_mapping');
+            if (saved) customMapping = JSON.parse(saved);
+        } catch (e) {}
+    }
+
     // Ultra-flexible key finders with exhaustive candidate variations
-    // Optional 'exclude' param prevents the same column being assigned to two fields
     const findKey = (candidates, exclude = []) => {
         return keys.find(k => {
             const clean = k.trim().toLowerCase();
-            if (exclude.includes(k)) return false; // never reuse an already-assigned column
+            if (exclude.includes(k)) return false;
             return candidates.some(c => clean === c.toLowerCase() || clean.includes(c.toLowerCase()));
         }) || "";
     };
 
-    const keySno        = findKey(['s.no', 'sno', 'sl no', 'sr no', 's. no', 'serial', 'sl.no', 's_no', 'index', '#']);
-    const keySiteCode   = findKey(['site code', 'siteid', 'site_code', 'site id', 'site_id', 'site no', 'unit code', 'branch code', 'location code', 'site number', 'unit no', 'code', 'site_id']);
-    const keyRegion     = findKey(['region', 'zone', 'state', 'circle', 'area', 'reg', 'territory', 'city']);
-    // keySiteName explicitly excludes whichever column keySiteCode matched
-    // Try EXACT match first, then fall back to partial match
     const findKeyExact = (candidates, exclude = []) => {
-        // Priority 1: exact match
         const exact = keys.find(k => {
             if (exclude.includes(k)) return false;
             const clean = k.trim().toLowerCase();
             return candidates.some(c => clean === c.toLowerCase());
         });
         if (exact) return exact;
-        // Priority 2: partial match
         return keys.find(k => {
             if (exclude.includes(k)) return false;
             const clean = k.trim().toLowerCase();
@@ -1523,52 +1596,56 @@ window.normalizeRawData = function(rows) {
         }) || "";
     };
 
-    const keySiteName = findKeyExact(
+    const keySno        = customMapping?.sno || findKey(['s.no', 'sno', 'sl no', 'sr no', 's. no', 'serial', 'sl.no', 's_no', 'index', '#']);
+    const keySiteCode   = customMapping?.siteCode || findKey(['site code', 'siteid', 'site_code', 'site id', 'site_id', 'site no', 'unit code', 'branch code', 'location code', 'site number', 'unit no', 'code']);
+    const keyRegion     = customMapping?.region || findKey(['region', 'zone', 'state', 'circle', 'area', 'reg', 'territory', 'city']);
+    
+    const keySiteName = customMapping?.siteName || findKeyExact(
         ['site name', 'sitename', 'site_name', 'unit name', 'branch name', 'location name',
          'property name', 'facility name', 'client name', 'account name', 'project name', 'building name',
          'site', 'name', 'unit', 'location', 'property', 'facility', 'building', 'project', 'client', 'account'],
         [keySiteCode]
     );
 
-    const keyCustGroup  = findKey(['customer group', 'customergroup', 'customer_group', 'client group', 'client', 'customer', 'account']);
-    const keyStatus     = findKey(['site status', 'sitestatus', 'status', 'active status']);
-    const keySupervisor = findKey(['supervisor', 'super visor', 'field supervisor']);
+    const keyCustGroup  = customMapping?.custGroup || findKey(['customer group', 'customergroup', 'customer_group', 'client group', 'client', 'customer', 'account']);
+    const keyStatus     = customMapping?.status || findKey(['site status', 'sitestatus', 'status', 'active status']);
+    const keySupervisor = customMapping?.supervisor || findKey(['supervisor', 'super visor', 'field supervisor']);
 
     // Precise matches for management hierarchy
-    const keySrManager  = keys.find(k => {
+    const keySrManager  = customMapping?.srManager || keys.find(k => {
         const cl = k.trim().toLowerCase();
         return (cl.includes('sr') || cl.includes('senior')) && cl.includes('manager');
     }) || findKey(['sr manager', 'sr. manager', 'senior manager', 'sr mgr']) || "";
 
-    const keyAM = keys.find(k => {
+    const keyAM = customMapping?.am || keys.find(k => {
         const cl = k.trim().toLowerCase();
         return cl.includes('assistant') && cl.includes('manager');
     }) || findKey(['assistant manager', 'assitant manager', 'ast manager', 'am']) || "";
 
-    const keyManager = keys.find(k => {
+    const keyManager = customMapping?.manager || keys.find(k => {
         const cl = k.trim().toLowerCase();
         return cl.includes('manager')
             && !cl.includes('sr') && !cl.includes('senior') && !cl.includes('assistant');
     }) || findKey(['manager', 'mgr', 'site manager']) || "";
 
     // Candidate keys for standalone summary columns (in case sheet lacks month columns)
-    const keyStandaloneBilling = keys.find(k => {
+    const keyStandaloneBilling = customMapping?.billing || keys.find(k => {
         const cl = k.trim().toLowerCase();
         if (cl.includes('%') || cl.includes('pct') || cl.includes('share')) return false;
-        return ['total billing', 'billing value', 'billing amount', 'billed amount', 'billed', 'billing', 'revenue', 'site billing', 'bill amt', 'gross billing'].some(kw => cl.includes(kw));
-    }) || findKey(['billing', 'revenue']);
+        return ['total billing', 'billing value', 'billing amount', 'billed amount', 'billed', 'billing', 'revenue', 'site billing', 'bill amt', 'gross billing', 'income', 'sales'].some(kw => cl.includes(kw));
+    }) || findKey(['billing', 'revenue', 'income', 'sales']);
 
-    const keyStandaloneExpense = keys.find(k => {
+    const keyStandaloneExpense = customMapping?.expense || keys.find(k => {
         const cl = k.trim().toLowerCase();
         if (cl.includes('%') || cl.includes('pct') || cl.includes('share')) return false;
-        return ['total manpower expense', 'total expense', 'manpower expense', 'manpower cost', 'expense', 'salary', 'manpower', 'wages', 'labor cost'].some(kw => cl.includes(kw));
-    }) || findKey(['expense', 'manpower', 'salary']);
+        return ['total manpower expense', 'total expense', 'manpower expense', 'manpower cost', 'expense', 'salary', 'manpower', 'wages', 'labor cost', 'direct cost', 'cost'].some(kw => cl.includes(kw));
+    }) || findKey(['expense', 'manpower', 'salary', 'cost']);
 
-    const keyStandaloneCons = keys.find(k => {
+    const keyStandaloneCons = customMapping?.consumption || keys.find(k => {
         const cl = k.trim().toLowerCase();
         if (cl.includes('%') || cl.includes('pct') || cl.includes('share') || cl.includes('ratio')) return false;
-        return ['total consumption value', 'total consumption', 'consumption value', 'material consumption', 'consumption', 'material cost', 'cons value', 'supplies', 'material', 'replacement value', 'total replacement', 'replacement cost', 'replacement', 'repl value', 'repl cost'].some(kw => cl.includes(kw));
-    }) || findKey(['consumption', 'replacement', 'material', 'supplies']);
+        return ['total consumption value', 'total consumption', 'consumption value', 'material consumption', 'consumption', 'material cost', 'cons value', 'supplies', 'material', 'replacement value', 'total replacement', 'replacement cost', 'replacement', 'repl value', 'repl cost', 'spares', 'spare parts'].some(kw => cl.includes(kw));
+    }) || findKey(['consumption', 'replacement', 'material', 'supplies', 'spares']);
 
     // Detect pre-calculated Replacement % or Consumption % columns
     const keySheetReplPct = keys.find(k => {
@@ -1577,17 +1654,32 @@ window.normalizeRawData = function(rows) {
     }) || "";
 
     // Detect month columns supporting multiple date & header formats
+    // Auto-detects year from column headers (2026, 2027, etc.)
     const monthsDetected = [];
     const monthPatterns = [
-        { name: 'Jan', keys: ['jan', 'january', '01/', '01-', '1/', '1-'] },
-        { name: 'Feb', keys: ['feb', 'february', '02/', '02-', '2/', '2-'] },
-        { name: 'Mar', keys: ['mar', 'march', '03/', '03-', '3/', '3-'] },
-        { name: 'Apr', keys: ['apr', 'april', '04/', '04-', '4/', '4-'] },
-        { name: 'May', keys: ['may', '05/', '05-', '5/', '5-'] },
-        { name: 'Jun', keys: ['jun', 'june', '06/', '06-', '6/', '6-'] },
-        { name: 'Jul', keys: ['jul', 'july', '07/', '07-', '7/', '7-'] },
-        { name: 'Aug', keys: ['aug', 'august', '08/', '08-', '8/', '8-'] }
+        { name: 'Jan', keys: ['jan', 'january', '01/', '01-', '/01/', '-01-', '1/', '1-'] },
+        { name: 'Feb', keys: ['feb', 'february', '02/', '02-', '/02/', '-02-', '2/', '2-'] },
+        { name: 'Mar', keys: ['mar', 'march', '03/', '03-', '/03/', '-03-', '3/', '3-'] },
+        { name: 'Apr', keys: ['apr', 'april', '04/', '04-', '/04/', '-04-', '4/', '4-'] },
+        { name: 'May', keys: ['may', '05/', '05-', '/05/', '-05-', '5/', '5-'] },
+        { name: 'Jun', keys: ['jun', 'june', '06/', '06-', '/06/', '-06-', '6/', '6-'] },
+        { name: 'Jul', keys: ['jul', 'july', '07/', '07-', '/07/', '-07-', '7/', '7-'] },
+        { name: 'Aug', keys: ['aug', 'august', '08/', '08-', '/08/', '-08-', '8/', '8-'] },
+        { name: 'Sep', keys: ['sep', 'sept', 'september', '09/', '09-', '/09/', '-09-', '9/', '9-'] },
+        { name: 'Oct', keys: ['oct', 'october', '10/', '10-', '/10/', '-10-'] },
+        { name: 'Nov', keys: ['nov', 'november', '11/', '11-', '/11/', '-11-'] },
+        { name: 'Dec', keys: ['dec', 'december', '12/', '12-', '/12/', '-12-'] }
     ];
+
+    // Auto-detect years present in column headers (e.g. 2026, 2027)
+    const detectedYears = new Set();
+    keys.forEach(k => {
+        const yearMatch = k.match(/20(\d{2})/);
+        if (yearMatch) detectedYears.add(parseInt('20' + yearMatch[1]));
+    });
+    const sortedYears = Array.from(detectedYears).sort();
+    // Update global month names list based on actually detected months
+    const detectedMonthNames = [];
 
     monthPatterns.forEach(mp => {
         let bCol = "", eCol = "", cCol = "";
@@ -1602,14 +1694,27 @@ window.normalizeRawData = function(rows) {
         });
 
         if (bCol || eCol || cCol) {
+            // Try to detect which year this month belongs to from the column name
+            let yearLabel = '';
+            const anyCol = bCol || eCol || cCol;
+            const yearMatch = anyCol.match(/20\d{2}/);
+            if (yearMatch) yearLabel = ' ' + yearMatch[0];
+
+            const monthKey = mp.name + yearLabel; // e.g. "Jan 2026" or "Sep 2027"
+            detectedMonthNames.push(monthKey);
             monthsDetected.push({
-                name: mp.name,
+                name: monthKey,
                 billingCol: bCol,
                 expenseCol: eCol,
                 consumptionCol: cCol
             });
         }
     });
+
+    // Update global MONTH_NAMES with the actual months found in this file
+    if (detectedMonthNames.length > 0) {
+        window.MONTH_NAMES = detectedMonthNames;
+    }
 
     // Read precalculated averages candidate keys ONCE outside the loop for speed
     const keyAvgConsumption = findKey(['average monthly consumption', 'avg monthly consumption']);
@@ -4169,6 +4274,7 @@ document.addEventListener('click', (e) => {
 });
 
 function populateFilterDropdowns(sites) {
+    const selMonth  = document.getElementById('filterMonth');
     const selRegion = document.getElementById('filterRegion');
     const selStatus = document.getElementById('filterStatus');
     const selSrManager = document.getElementById('filterSrManager');
@@ -4191,6 +4297,12 @@ function populateFilterDropdowns(sites) {
 
     selSrManager.innerHTML = '<option value="ALL">All Sr Managers</option>' + 
         Array.from(srManagers).sort().map(sr => `<option value="${sr}">${sr}</option>`).join('');
+
+    // Dynamically populate month filter from detected months in the uploaded file
+    if (selMonth && window.MONTH_NAMES && window.MONTH_NAMES.length > 0) {
+        selMonth.innerHTML = '<option value="ALL">All Months (Total/Avg)</option>' +
+            window.MONTH_NAMES.map(m => `<option value="${m}">${m}</option>`).join('');
+    }
 }
 
 window.applyFilters = function() {
@@ -4455,14 +4567,122 @@ window.searchMasterTable = function() {
     renderMasterTable(filtered);
 };
 
+// ═══════════════════════════════════════════════════════════
+// COLUMN MAPPING UI CONTROLLERS
+// ═══════════════════════════════════════════════════════════
+window.currentRawRows = null;
+window.currentRawFileName = '';
+
+window.showColumnMappingModal = function(rawRows, fileName) {
+    if (rawRows) {
+        window.currentRawRows = rawRows;
+        window.currentRawFileName = fileName || 'Uploaded File';
+    }
+
+    const modal = document.getElementById('columnMappingModal');
+    if (!modal) return;
+
+    // Get detected column keys from raw rows or sample
+    const sample = window.currentRawRows && window.currentRawRows.length > 0 
+        ? window.currentRawRows[0] 
+        : (window.activeDataset && window.activeDataset.length > 0 ? window.activeDataset[0] : null);
+    
+    if (!sample) {
+        alert("Please upload a file or load demo data first.");
+        return;
+    }
+
+    const keys = Object.keys(sample);
+
+    const badgeContainer = document.getElementById('detectedColumnsList');
+    if (badgeContainer) {
+        badgeContainer.innerHTML = keys.map(k => `<span class="px-2 py-0.5 rounded bg-gray-800 border border-gray-700 text-gray-300 font-mono">${k}</span>`).join('');
+    }
+
+    // Populate all mapping dropdowns
+    const mapSelects = [
+        { id: 'mapSiteCode', autoMatch: ['site code', 'code', 'siteid', 'id'] },
+        { id: 'mapSiteName', autoMatch: ['site name', 'name', 'unit', 'property', 'facility', 'location'] },
+        { id: 'mapRegion', autoMatch: ['region', 'zone', 'state', 'city', 'area'] },
+        { id: 'mapCustGroup', autoMatch: ['customer', 'client', 'group', 'account'] },
+        { id: 'mapStatus', autoMatch: ['status', 'state', 'active'] },
+        { id: 'mapBilling', autoMatch: ['billing', 'revenue', 'income', 'sales', 'billed'] },
+        { id: 'mapExpense', autoMatch: ['expense', 'cost', 'manpower', 'salary', 'wages'] },
+        { id: 'mapConsumption', autoMatch: ['consumption', 'replacement', 'material', 'spare', 'supplies'] },
+        { id: 'mapManager', autoMatch: ['manager', 'mgr'] },
+        { id: 'mapSrManager', autoMatch: ['sr manager', 'senior', 'sr. manager'] }
+    ];
+
+    // Load existing mapping if any
+    let savedMapping = {};
+    try {
+        const saved = localStorage.getItem('site_analytics_custom_mapping');
+        if (saved) savedMapping = JSON.parse(saved);
+    } catch(e) {}
+
+    mapSelects.forEach(cfg => {
+        const el = document.getElementById(cfg.id);
+        if (!el) return;
+
+        let optionsHtml = '<option value="">-- Auto Detect / None --</option>';
+        keys.forEach(k => {
+            optionsHtml += `<option value="${k}">${k}</option>`;
+        });
+        el.innerHTML = optionsHtml;
+
+        // Pre-select if in saved mapping or best auto-match
+        const keyField = cfg.id.replace('map', '');
+        const keyLower = keyField.charAt(0).toLowerCase() + keyField.slice(1);
+        if (savedMapping[keyLower] && keys.includes(savedMapping[keyLower])) {
+            el.value = savedMapping[keyLower];
+        } else {
+            // Find best auto match
+            const matchedKey = keys.find(k => cfg.autoMatch.some(am => k.toLowerCase().includes(am)));
+            if (matchedKey) el.value = matchedKey;
+        }
+    });
+
+    modal.classList.remove('hidden');
+};
+
+window.closeColumnMappingModal = function() {
+    const modal = document.getElementById('columnMappingModal');
+    if (modal) modal.classList.add('hidden');
+};
+
+window.applyColumnMapping = function() {
+    const mapping = {
+        siteCode: document.getElementById('mapSiteCode')?.value || '',
+        siteName: document.getElementById('mapSiteName')?.value || '',
+        region: document.getElementById('mapRegion')?.value || '',
+        custGroup: document.getElementById('mapCustGroup')?.value || '',
+        status: document.getElementById('mapStatus')?.value || '',
+        billing: document.getElementById('mapBilling')?.value || '',
+        expense: document.getElementById('mapExpense')?.value || '',
+        consumption: document.getElementById('mapConsumption')?.value || '',
+        manager: document.getElementById('mapManager')?.value || '',
+        srManager: document.getElementById('mapSrManager')?.value || ''
+    };
+
+    if (document.getElementById('saveMappingCheck')?.checked) {
+        try {
+            localStorage.setItem('site_analytics_custom_mapping', JSON.stringify(mapping));
+        } catch(e) {}
+    }
+
+    if (window.currentRawRows && window.currentRawRows.length > 0) {
+        const processed = window.normalizeRawData(window.currentRawRows, mapping);
+        window.setActiveDataset(processed, window.currentRawFileName || 'Custom Mapped Data', true);
+    } else if (window.activeDataset && window.activeDataset.length > 0) {
+        const processed = window.normalizeRawData(window.activeDataset, mapping);
+        window.setActiveDataset(processed, 'Custom Mapped Data', true);
+    }
+
+    closeColumnMappingModal();
+    alert("✅ Column mapping applied successfully! Data reloaded with your custom column mapping.");
+};
+
 </script>
-
-
-
-
-
-
-
 
 </body>
 </html>
