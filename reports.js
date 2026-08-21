@@ -620,24 +620,32 @@ window.renderMonthlyTrendsReport = function(sites) {
     const tbody = document.getElementById('tblMonthlyTrendsBody');
     if (!tbody) return;
 
-    let monthKeys = [];
+    const all12Standard = ['Jan 2026', 'Feb 2026', 'Mar 2026', 'Apr 2026', 'May 2026', 'Jun 2026', 'Jul 2026', 'Aug 2026', 'Sep 2026', 'Oct 2026', 'Nov 2026', 'Dec 2026'];
+    const detectedSet = new Set(all12Standard);
+
     if (window.MONTH_NAMES && window.MONTH_NAMES.length > 0) {
-        monthKeys = window.MONTH_NAMES;
-    } else {
-        const monthKeySet = new Set();
+        window.MONTH_NAMES.forEach(m => detectedSet.add(m));
+    }
+
+    if (sites) {
         sites.forEach(s => {
             if (s.monthlyMetrics) {
                 Object.keys(s.monthlyMetrics).forEach(k => {
-                    if (k.includes(' ')) monthKeySet.add(k);
+                    if (/\d{4}/.test(k)) detectedSet.add(k);
                 });
             }
         });
-        monthKeys = Array.from(monthKeySet);
     }
 
-    if (monthKeys.length === 0) {
-        monthKeys = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    }
+    const monthOrderMap = { Jan: 1, Feb: 2, Mar: 3, Apr: 4, May: 5, Jun: 6, Jul: 7, Aug: 8, Sep: 9, Oct: 10, Nov: 11, Dec: 12 };
+    const monthKeys = Array.from(detectedSet).sort((a, b) => {
+        const aShort = a.split(' ')[0];
+        const bShort = b.split(' ')[0];
+        const aYear = a.match(/20\d{2}/) ? parseInt(a.match(/20\d{2}/)[0]) : 2026;
+        const bYear = b.match(/20\d{2}/) ? parseInt(b.match(/20\d{2}/)[0]) : 2026;
+        if (aYear !== bYear) return aYear - bYear;
+        return (monthOrderMap[aShort] || 99) - (monthOrderMap[bShort] || 99);
+    });
 
     const monthFullMap = {
         Jan: 'January', Feb: 'February', Mar: 'March', Apr: 'April',
@@ -659,7 +667,8 @@ window.renderMonthlyTrendsReport = function(sites) {
             if (!s.monthlyMetrics) return;
             let mData = s.monthlyMetrics[mKey];
             if (!mData) {
-                mData = s.monthlyMetrics[shortMonth];
+                const foundKey = Object.keys(s.monthlyMetrics).find(k => k.split(' ')[0].toLowerCase() === shortMonth.toLowerCase());
+                if (foundKey) mData = s.monthlyMetrics[foundKey];
             }
             if (mData) {
                 billing     += mData.billing     || 0;
@@ -674,17 +683,7 @@ window.renderMonthlyTrendsReport = function(sites) {
         return { key: mKey, month: shortMonth, label: fullMonthName, billing, expense, consumption, profit, margin };
     });
 
-    const activeMonths = monthlyTotals.filter(mt => mt.billing > 0 || mt.expense > 0 || mt.consumption > 0);
-
-    if (activeMonths.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-gray-500 italic">
-            <i class="fa-solid fa-circle-info mr-2 text-gray-600"></i>
-            No monthly data found. Make sure your file has month-specific billing/expense/consumption columns.
-        </td></tr>`;
-        return;
-    }
-
-    tbody.innerHTML = activeMonths.map(mt => `
+    tbody.innerHTML = monthlyTotals.map(mt => `
         <tr class="hover:bg-gray-800/40 transition">
             <td class="py-3 px-4 font-bold text-white">${mt.label}</td>
             <td class="py-3 px-4 text-right font-mono font-semibold text-white">${formatRupee(mt.billing)}</td>
@@ -696,7 +695,7 @@ window.renderMonthlyTrendsReport = function(sites) {
     `).join('');
 
     if (window.updateMonthlyTrendsChart) {
-        window.updateMonthlyTrendsChart(activeMonths);
+        window.updateMonthlyTrendsChart(monthlyTotals);
     }
 };
 
