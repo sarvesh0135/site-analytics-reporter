@@ -917,25 +917,33 @@ window.openSiteDetailModal = function(siteCode) {
                     <tbody class="divide-y divide-gray-800/40 text-gray-300">
     `;
 
-    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug'];
-    const monthFull = { Jan:'January', Feb:'February', Mar:'March', Apr:'April', May:'May', Jun:'June', Jul:'July', Aug:'August' };
+    const monthFull = { Jan:'January', Feb:'February', Mar:'March', Apr:'April', May:'May', Jun:'June', Jul:'July', Aug:'August', Sep:'September', Oct:'October', Nov:'November', Dec:'December' };
+    const all12Months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-    months.forEach(mKey => {
-        const m = site.monthlyMetrics ? site.monthlyMetrics[mKey] : null;
-        if (m && (m.billing > 0 || m.expense > 0 || m.consumption > 0)) {
-            const mProfit = m.billing - (m.expense + m.consumption);
-            const mMargin = m.billing > 0 ? ((mProfit / m.billing) * 100).toFixed(2) : '0.00';
-            html += `
-                <tr class="hover:bg-gray-900/60 transition">
-                    <td class="py-2 px-3 font-sans font-bold text-white">${monthFull[mKey]}</td>
-                    <td class="py-2 px-3 text-right">${formatRupee(m.billing)}</td>
-                    <td class="py-2 px-3 text-right text-red-400">${formatRupee(m.expense)}</td>
-                    <td class="py-2 px-3 text-right text-purple-400">${formatRupee(m.consumption)}</td>
-                    <td class="py-2 px-3 text-right font-bold ${mProfit >= 0 ? 'text-emerald-400' : 'text-red-400'}">${formatRupee(mProfit)}</td>
-                    <td class="py-2 px-3 text-right font-bold ${parseFloat(mMargin) >= 15 ? 'text-emerald-400' : 'text-amber-400'}">${mMargin}%</td>
-                </tr>
-            `;
+    all12Months.forEach(shortM => {
+        let m = null;
+        if (site.monthlyMetrics) {
+            const foundKey = Object.keys(site.monthlyMetrics).find(k => k === shortM || k.startsWith(shortM + ' ') || k.toLowerCase().startsWith(shortM.toLowerCase()));
+            if (foundKey) m = site.monthlyMetrics[foundKey];
         }
+
+        const bVal = m ? (m.billing || 0) : 0;
+        const eVal = m ? (m.expense || 0) : 0;
+        const cVal = m ? (m.consumption || 0) : 0;
+        const mProfit = bVal - (eVal + cVal);
+        const mMargin = bVal > 0 ? ((mProfit / bVal) * 100).toFixed(2) : '0.00';
+        const displayLabel = monthFull[shortM] || shortM;
+
+        html += `
+            <tr class="hover:bg-gray-900/60 transition">
+                <td class="py-2 px-3 font-sans font-bold text-white">${displayLabel}</td>
+                <td class="py-2 px-3 text-right">${formatRupee(bVal)}</td>
+                <td class="py-2 px-3 text-right text-red-400">${formatRupee(eVal)}</td>
+                <td class="py-2 px-3 text-right text-purple-400">${formatRupee(cVal)}</td>
+                <td class="py-2 px-3 text-right font-bold ${mProfit >= 0 ? 'text-emerald-400' : 'text-red-400'}">${formatRupee(mProfit)}</td>
+                <td class="py-2 px-3 text-right font-bold ${parseFloat(mMargin) >= 15 ? 'text-emerald-400' : 'text-amber-400'}">${mMargin}%</td>
+            </tr>
+        `;
     });
 
     html += `
