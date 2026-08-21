@@ -258,43 +258,56 @@ window.normalizeRawData = function(rows, customMapping = null) {
             && !cl.includes('sr') && !cl.includes('senior') && !cl.includes('assistant');
     }) || findKey(['manager', 'mgr', 'site manager']) || "";
 
+    const monthKwList = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec', '2024', '2025', '2026', '2027'];
+    const isMonthColHeader = (k) => {
+        const cl = k.trim().toLowerCase();
+        return monthKwList.some(m => cl.includes(m));
+    };
+
     const keyStandaloneBilling = customMapping?.billing || keys.find(k => {
+        if (isMonthColHeader(k)) return false;
         const cl = k.trim().toLowerCase();
         if (cl.includes('%') || cl.includes('pct') || cl.includes('share')) return false;
-        return ['total billing', 'billing value', 'billing amount', 'billed amount', 'billed', 'billing', 'revenue', 'site billing', 'bill amt', 'gross billing'].some(kw => cl.includes(kw));
-    }) || findKey(['billing', 'revenue']);
+        return ['total billing', 'billing value', 'billing amount', 'billed amount', 'gross billing'].some(kw => cl.includes(kw));
+    }) || "";
 
     const keyStandaloneExpense = customMapping?.expense || keys.find(k => {
+        if (isMonthColHeader(k)) return false;
         const cl = k.trim().toLowerCase();
         if (cl.includes('%') || cl.includes('pct') || cl.includes('share')) return false;
-        return ['total manpower expense', 'total expense', 'manpower expense', 'manpower cost', 'expense', 'salary', 'manpower', 'wages', 'labor cost'].some(kw => cl.includes(kw));
-    }) || findKey(['expense', 'manpower', 'salary']);
+        return ['total manpower expense', 'total expense', 'manpower expense', 'manpower cost'].some(kw => cl.includes(kw));
+    }) || "";
 
     const keyStandaloneCons = customMapping?.consumption || keys.find(k => {
+        if (isMonthColHeader(k)) return false;
         const cl = k.trim().toLowerCase();
         if (cl.includes('%') || cl.includes('pct') || cl.includes('share') || cl.includes('ratio')) return false;
-        return ['total consumption value', 'total consumption', 'consumption value', 'material consumption', 'consumption', 'material cost', 'cons value', 'supplies', 'material', 'replacement value', 'total replacement', 'replacement cost', 'replacement', 'repl value', 'repl cost'].some(kw => cl.includes(kw));
-    }) || findKey(['consumption', 'replacement', 'material', 'supplies']);
+        return ['total consumption value', 'total consumption', 'consumption value', 'material consumption'].some(kw => cl.includes(kw));
+    }) || "";
 
     const keySheetReplPct = keys.find(k => {
         const cl = k.trim().toLowerCase();
         return (cl.includes('replacement') || cl.includes('consumption') || cl.includes('material') || cl.includes('repl') || cl.includes('cons')) && (cl.includes('%') || cl.includes('pct') || cl.includes('share') || cl.includes('ratio'));
-    }) || "";
+    }) || "";    const excludedMonthColKeys = [
+        keySno, keySiteCode, keyRegion, keySiteName, keyCustGroup, keyStatus,
+        keySupervisor, keyAM, keyManager, keySrManager, keySalesModel, keyServiceProvider,
+        keyStandaloneBilling, keyStandaloneExpense, keyStandaloneCons, keySheetReplPct
+    ].filter(k => k && k !== '');
 
     const monthsDetected = [];
     const monthPatterns = [
-        { name: 'Jan', keys: ['jan', 'january', '01/', '01-', '/01/', '-01-', '01_', '_01_', '1/', '1-', '/1/', '-1-', '1_', '_1_', '2026-01', '2027-01', 'month 1', 'month-1', 'm01', 'm1'] },
-        { name: 'Feb', keys: ['feb', 'february', '02/', '02-', '/02/', '-02-', '02_', '_02_', '2/', '2-', '/2/', '-2-', '2_', '_2_', '2026-02', '2027-02', 'month 2', 'month-2', 'm02', 'm2'] },
-        { name: 'Mar', keys: ['mar', 'march', '03/', '03-', '/03/', '-03-', '03_', '_03_', '3/', '3-', '/3/', '-3-', '3_', '_3_', '2026-03', '2027-03', 'month 3', 'month-3', 'm03', 'm3'] },
-        { name: 'Apr', keys: ['apr', 'april', '04/', '04-', '/04/', '-04-', '04_', '_04_', '4/', '4-', '/4/', '-4-', '4_', '_4_', '2026-04', '2027-04', 'month 4', 'month-4', 'm04', 'm4'] },
-        { name: 'May', keys: ['may', '05/', '05-', '/05/', '-05-', '05_', '_05_', '5/', '5-', '/5/', '-5-', '5_', '_5_', '2026-05', '2027-05', 'month 5', 'month-5', 'm05', 'm5'] },
-        { name: 'Jun', keys: ['jun', 'june', '06/', '06-', '/06/', '-06-', '06_', '_06_', '6/', '6-', '/6/', '-6-', '6_', '_6_', '2026-06', '2027-06', 'month 6', 'month-6', 'm06', 'm6'] },
-        { name: 'Jul', keys: ['jul', 'july', '07/', '07-', '/07/', '-07-', '07_', '_07_', '7/', '7-', '/7/', '-7-', '7_', '_7_', '2026-07', '2027-07', 'month 7', 'month-7', 'm07', 'm7'] },
-        { name: 'Aug', keys: ['aug', 'august', '08/', '08-', '/08/', '-08-', '08_', '_08_', '8/', '8-', '/8/', '-8-', '8_', '_8_', '2026-08', '2027-08', 'month 8', 'month-8', 'm08', 'm8'] },
-        { name: 'Sep', keys: ['sep', 'sept', 'september', '09/', '09-', '/09/', '-09-', '09_', '_09_', '9/', '9-', '/9/', '-9-', '9_', '_9_', '2026-09', '2027-09', 'month 9', 'month-9', 'm09', 'm9'] },
-        { name: 'Oct', keys: ['oct', 'october', '10/', '10-', '/10/', '-10-', '10_', '_10_', '2026-10', '2027-10', 'month 10', 'month-10', 'm10'] },
-        { name: 'Nov', keys: ['nov', 'november', '11/', '11-', '/11/', '-11-', '11_', '_11_', '2026-11', '2027-11', 'month 11', 'month-11', 'm11'] },
-        { name: 'Dec', keys: ['dec', 'december', '12/', '12-', '/12/', '-12-', '12_', '_12_', '2026-12', '2027-12', 'month 12', 'month-12', 'm12'] }
+        { name: 'Jan', keys: ['january', 'jan', '01/', '01-', '/01/', '-01-', '01_', '_01_', '2026-01', '2027-01', 'month 1', 'month-1', 'm01'] },
+        { name: 'Feb', keys: ['february', 'feb', '02/', '02-', '/02/', '-02-', '02_', '_02_', '2026-02', '2027-02', 'month 2', 'month-2', 'm02'] },
+        { name: 'Mar', keys: ['march', 'mar', '03/', '03-', '/03/', '-03-', '03_', '_03_', '2026-03', '2027-03', 'month 3', 'month-3', 'm03'] },
+        { name: 'Apr', keys: ['april', 'apr', '04/', '04-', '/04/', '-04-', '04_', '_04_', '2026-04', '2027-04', 'month 4', 'month-4', 'm04'] },
+        { name: 'May', keys: ['may', '05/', '05-', '/05/', '-05-', '05_', '_05_', '2026-05', '2027-05', 'month 5', 'month-5', 'm05'] },
+        { name: 'Jun', keys: ['june', 'jun', '06/', '06-', '/06/', '-06-', '06_', '_06_', '2026-06', '2027-06', 'month 6', 'month-6', 'm06'] },
+        { name: 'Jul', keys: ['july', 'jul', '07/', '07-', '/07/', '-07-', '07_', '_07_', '2026-07', '2027-07', 'month 7', 'month-7', 'm07'] },
+        { name: 'Aug', keys: ['august', 'aug', '08/', '08-', '/08/', '-08-', '08_', '_08_', '2026-08', '2027-08', 'month 8', 'month-8', 'm08'] },
+        { name: 'Sep', keys: ['september', 'sept', 'sep', '09/', '09-', '/09/', '-09-', '09_', '_09_', '2026-09', '2027-09', 'month 9', 'month-9', 'm09'] },
+        { name: 'Oct', keys: ['october', 'oct', '10/', '10-', '/10/', '-10-', '10_', '_10_', '2026-10', '2027-10', 'month 10', 'month-10', 'm10'] },
+        { name: 'Nov', keys: ['november', 'nov', '11/', '11-', '/11/', '-11-', '11_', '_11_', '2026-11', '2027-11', 'month 11', 'month-11', 'm11'] },
+        { name: 'Dec', keys: ['december', 'dec', '12/', '12-', '/12/', '-12-', '12_', '_12_', '2026-12', '2027-12', 'month 12', 'month-12', 'm12'] }
     ];
 
     const detectedMonthNames = [];
@@ -303,16 +316,21 @@ window.normalizeRawData = function(rows, customMapping = null) {
         let bCol = "", eCol = "", cCol = "";
         keys.forEach(k => {
             const kLower = k.trim().toLowerCase();
+            if (excludedMonthColKeys.includes(k) || ['remarks', 'notes', 'comment', 'description', 'detail'].some(x => kLower.includes(x))) {
+                return;
+            }
+
             const matchesMonth = mp.keys.some(mk => kLower.includes(mk));
             if (matchesMonth) {
-                if (kLower.includes('bill') || kLower.includes('revenue') || kLower.includes('invoic') || kLower.includes('sales') || kLower.includes('amt') || kLower.includes('amount')) {
+                if (kLower.includes('bill') || kLower.includes('revenue') || kLower.includes('invoic') || kLower.includes('billed')) {
                     bCol = k;
-                } else if (kLower.includes('exp') || kLower.includes('manpower') || kLower.includes('salary') || kLower.includes('wage') || kLower.includes('cost') || kLower.includes('labor')) {
+                } else if (kLower.includes('exp') || kLower.includes('manpower') || kLower.includes('salary') || kLower.includes('wage') || kLower.includes('labor')) {
                     eCol = k;
-                } else if (kLower.includes('consum') || kLower.includes('value') || kLower.includes('material') || kLower.includes('suppli') || kLower.includes('replace') || kLower.includes('repl') || kLower.includes('spare')) {
+                } else if (kLower.includes('consum') || kLower.includes('material') || kLower.includes('suppli') || kLower.includes('spare') || kLower.includes('replacement cost') || kLower.includes('replacement value') || kLower.includes('repl cost') || kLower.includes('repl value')) {
                     cCol = k;
                 } else {
-                    if (!bCol) bCol = k;
+                    const isExactMonthHeader = mp.keys.some(mk => kLower === mk || kLower === mk + ' 2026' || kLower === mk + ' 2025' || kLower === mk + ' 2027');
+                    if (isExactMonthHeader && !bCol) bCol = k;
                 }
             }
         });
