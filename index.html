@@ -253,6 +253,10 @@
                         <i class="fa-solid fa-bolt text-amber-400"></i>
                         <span>Explore Demo Sample Data</span>
                     </button>
+                    <button onclick="localStorage.clear(); location.reload();" class="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-red-950/60 hover:bg-red-900 text-red-300 text-xs font-semibold border border-red-800/60 transition inline-flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-rotate-right"></i>
+                        <span>Clear Cache & Force Reload</span>
+                    </button>
                 </div>
 
                 <div class="mt-6 pt-4 border-t border-gray-800 text-left">
@@ -267,7 +271,7 @@
                         <span class="px-2 py-0.5 rounded bg-gray-800/80 border border-gray-700/50">ASSISTANT MANAGER</span>
                         <span class="px-2 py-0.5 rounded bg-gray-800/80 border border-gray-700/50">MANAGER</span>
                         <span class="px-2 py-0.5 rounded bg-gray-800/80 border border-gray-700/50">SR MANAGER</span>
-                        <span class="px-2 py-0.5 rounded bg-brand-500/10 text-brand-300 border border-brand-500/20">JAN-JUL/AUG 2026 BILLING, EXPENSE & Consumption Value</span>
+                        <span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 font-semibold">ALL MONTHS (Jan–Dec) Billing, Expense & Consumption Value</span>
                     </div>
                 </div>
             </div>
@@ -282,7 +286,10 @@
                 <div class="glass-panel rounded-xl p-4 flex flex-wrap items-center justify-between gap-4 border-l-4 border-l-brand-500 shadow-md">
                     <div class="flex items-center space-x-4">
                         <div>
-                            <span class="text-xs uppercase tracking-wider text-gray-400 font-semibold">Active Dataset</span>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs uppercase tracking-wider text-gray-400 font-semibold">Active Dataset</span>
+                                <span class="px-2 py-0.5 text-[10px] rounded font-mono font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">v3.5 ACTIVE</span>
+                            </div>
                             <h2 id="datasetTitle" class="text-base font-bold text-white">Sample Dataset (Jan - July 2026)</h2>
                         </div>
                         <div class="h-8 w-px bg-gray-800"></div>
