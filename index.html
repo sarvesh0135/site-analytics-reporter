@@ -378,7 +378,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div class="glass-panel p-5 rounded-xl space-y-2 relative overflow-hidden">
                         <div class="absolute -right-4 -bottom-4 text-brand-500/10 text-7xl"><i class="fa-solid fa-indian-rupee-sign"></i></div>
-                        <span class="text-xs uppercase tracking-wider text-gray-400 font-semibold">Total Billing (Jan-Jul)</span>
+                        <span id="kpiTotalBillingLabel" class="text-xs uppercase tracking-wider text-gray-400 font-semibold">Total Billing</span>
                         <h3 id="kpiTotalBilling" class="text-2xl font-extrabold text-white">â‚¹0</h3>
                         <p class="text-xs text-gray-400 flex items-center gap-1">
                             Avg monthly: <span id="kpiAvgBilling" class="font-semibold text-gray-200">â‚¹0</span>
@@ -2150,9 +2150,18 @@ window.renderRegionConsumptionReport = function(sites, thresholdPct = 7.0) {
     let totalHighShareSitesCount = 0;
     let html = '';
 
-    const monthLabel = window.selectedMonth && window.selectedMonth !== 'ALL' 
-        ? `Month: ${window.selectedMonth} 2026` 
-        : `Overall (Jan-Jul/Aug 2026)`;
+    const monthLabel = window.selectedMonth && window.selectedMonth !== 'ALL'
+        ? `Month: ${window.selectedMonth}`
+        : (() => {
+            const mn = (window.MONTH_NAMES || []).filter(m => /\d{4}/.test(m));
+            if (mn.length > 0) {
+                const first = mn[0].split(' ')[0];
+                const last  = mn[mn.length - 1].split(' ')[0];
+                const year  = mn[mn.length - 1].split(' ')[1] || '';
+                return first === last ? `Overall (${first} ${year})` : `Overall (${first}–${last} ${year})`;
+            }
+            return 'Overall (All Months)';
+        })();
 
     Object.keys(regionMap).sort().forEach(regionName => {
         const regSites = regionMap[regionName];
@@ -4554,12 +4563,29 @@ function updateExecutiveKPIs(sites) {
     const expenseRatio = totalBilling > 0 ? ((totalExpense / totalBilling) * 100).toFixed(1) : "0.0";
     const consumptionRatio = totalBilling > 0 ? ((totalConsumption / totalBilling) * 100).toFixed(1) : "0.0";
 
-    const monthNameDisplay = window.selectedMonth && window.selectedMonth !== 'ALL' 
-        ? `Month: ${window.selectedMonth} 2026` 
-        : `Jan-Jul/Aug 2026`;
+    const mn = (window.MONTH_NAMES || []).filter(m => /\d{4}/.test(m));
+    let monthRangeDisplay = '';
+    if (window.selectedMonth && window.selectedMonth !== 'ALL') {
+        monthRangeDisplay = window.selectedMonth;
+    } else if (mn.length > 0) {
+        const first = mn[0].split(' ')[0];
+        const last  = mn[mn.length - 1].split(' ')[0];
+        const year  = mn[mn.length - 1].split(' ')[1] || '';
+        monthRangeDisplay = first === last ? `${first} ${year}` : `${first}–${last} ${year}`;
+    } else {
+        monthRangeDisplay = 'All Months';
+    }
+
+    // Update the KPI card header label dynamically
+    const billingLabelEl = document.getElementById('kpiTotalBillingLabel');
+    if (billingLabelEl) {
+        billingLabelEl.innerText = window.selectedMonth && window.selectedMonth !== 'ALL'
+            ? `Billing — ${window.selectedMonth}`
+            : `Total Billing (${monthRangeDisplay})`;
+    }
 
     document.getElementById('kpiTotalBilling').innerText = window.formatRupee(totalBilling);
-    document.getElementById('kpiAvgBilling').innerText = `${window.formatRupee(avgBillingPerSite)} (${monthNameDisplay})`;
+    document.getElementById('kpiAvgBilling').innerText = `${window.formatRupee(avgBillingPerSite)} (${monthRangeDisplay})`;
     document.getElementById('kpiTotalExpense').innerText = window.formatRupee(totalExpense);
     document.getElementById('kpiExpenseRatio').innerText = `${expenseRatio}% of Billing`;
     document.getElementById('kpiTotalConsumption').innerText = window.formatRupee(totalConsumption);
