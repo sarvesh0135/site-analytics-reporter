@@ -1526,9 +1526,9 @@ window.parseExcelFile = function(file, callback) {
                         return obj;
                     });
 
-                    const processed = window.normalizeRawData(rawJson);
+                    const processed = window.normalizeRawData(rawJson, null, name);
                     if (processed.length > 0) {
-                        sheetResults.push({ processed, sheetName: name, count: processed.length });
+                        sheetResults.push({ processed, sheetName: name, count: processed.length, rawJson });
                     }
                 } catch (sErr) {
                     console.warn(`[Parser] Error reading sheet '${name}':`, sErr);
@@ -1542,22 +1542,78 @@ window.parseExcelFile = function(file, callback) {
                 return;
             }
 
-            // Smart Selection:
-            // 1. If any single sheet has > 500 sites, it is the master consolidated sheet!
-            // 2. Otherwise, combine site records from all sheets.
             let finalSites = [];
             let loadedSourceName = '';
 
             const masterSheet = sheetResults.find(sr => sr.count > 500);
-            if (masterSheet) {
+            if (masterSheet && sheetResults.length === 1) {
                 finalSites = masterSheet.processed;
                 loadedSourceName = `${file.name} [${masterSheet.sheetName}]`;
             } else {
-                // Combine all sheets
+                // Combine and consolidate sites across all tabs/sheets by siteCode
+                const siteMap = {};
+                const allDetectedMonthsSet = new Set();
+
                 sheetResults.forEach(sr => {
-                    finalSites = finalSites.concat(sr.processed);
+                    sr.processed.forEach(s => {
+                        const codeKey = String(s.siteCode || s.code || s.siteName || '').trim().toUpperCase();
+                        if (!codeKey) return;
+
+                        if (!siteMap[codeKey]) {
+                            siteMap[codeKey] = {
+                                ...s,
+                                monthlyMetrics: { ...(s.monthlyMetrics || {}) }
+                            };
+                        } else {
+                            if (s.monthlyMetrics) {
+                                Object.keys(s.monthlyMetrics).forEach(mKey => {
+                                    siteMap[codeKey].monthlyMetrics[mKey] = s.monthlyMetrics[mKey];
+                                });
+                            }
+                        }
+                    });
                 });
-                loadedSourceName = `${file.name} [Combined ${sheetResults.length} Sheets]`;
+
+                const consolidatedSites = Object.values(siteMap).map(s => {
+                    let totB = 0, totE = 0, totC = 0;
+                    if (s.monthlyMetrics && Object.keys(s.monthlyMetrics).length > 0) {
+                        Object.keys(s.monthlyMetrics).forEach(mKey => {
+                            if (/\d{4}/.test(mKey)) {
+                                allDetectedMonthsSet.add(mKey);
+                                const m = s.monthlyMetrics[mKey];
+                                if (m) {
+                                    totB += (m.billing || 0);
+                                    totE += (m.expense || 0);
+                                    totC += (m.consumption || 0);
+                                }
+                            }
+                        });
+                        if (totB > 0 || totE > 0 || totC > 0) {
+                            s.totalBilling = totB;
+                            s.totalExpense = totE;
+                            s.totalConsumption = totC;
+                            s.activeBilling = totB;
+                            s.activeExpense = totE;
+                            s.activeConsumption = totC;
+                        }
+                    }
+                    return s;
+                });
+
+                if (allDetectedMonthsSet.size > 0) {
+                    const monthOrderMap = { Jan: 1, Feb: 2, Mar: 3, Apr: 4, May: 5, Jun: 6, Jul: 7, Aug: 8, Sep: 9, Oct: 10, Nov: 11, Dec: 12 };
+                    window.MONTH_NAMES = Array.from(allDetectedMonthsSet).sort((a, b) => {
+                        const aShort = a.split(' ')[0];
+                        const bShort = b.split(' ')[0];
+                        const aYear = a.match(/20\d{2}/) ? parseInt(a.match(/20\d{2}/)[0]) : 2026;
+                        const bYear = b.match(/20\d{2}/) ? parseInt(b.match(/20\d{2}/)[0]) : 2026;
+                        if (aYear !== bYear) return aYear - bYear;
+                        return (monthOrderMap[aShort] || 99) - (monthOrderMap[bShort] || 99);
+                    });
+                }
+
+                finalSites = consolidatedSites.length > 0 ? consolidatedSites : sheetResults[0].processed;
+                loadedSourceName = `${file.name} [Consolidated ${sheetResults.length} Tabs]`;
             }
 
             // Re-index site IDs
@@ -1589,7 +1645,7 @@ window.parseExcelFile = function(file, callback) {
 
 
 
-window.normalizeRawData = function(rows, customMapping = null) {
+window.normalizeRawData = function(rows, customMapping = null, sheetName = '') {
     if (!rows || rows.length === 0) return [];
 
     // Extract headers from first row keys
@@ -1763,6 +1819,29 @@ window.normalizeRawData = function(rows, customMapping = null) {
             });
         }
     });
+
+    if (monthsDetected.length === 0 && sheetName) {
+        const sLower = String(sheetName).trim().toLowerCase();
+        monthPatterns.forEach(mp => {
+            const matchesSheet = mp.keys.some(mk => sLower.includes(mk));
+            if (matchesSheet && !monthsDetected.some(m => m.shortName === mp.name)) {
+                let yearLabel = '';
+                const yearMatch4 = sLower.match(/20\d{2}/);
+                const yearMatch2 = sLower.match(/(?:^|[\s/_\-])([2-3]\d)(?:$|[\s/_\-])/);
+                if (yearMatch4) yearLabel = ' ' + yearMatch4[0];
+                else if (yearMatch2) yearLabel = ' 20' + yearMatch2[1];
+
+                monthsDetected.push({
+                    name: mp.name,
+                    yearLabel: yearLabel,
+                    shortName: mp.name,
+                    billingCol: keyStandaloneBilling,
+                    expenseCol: keyStandaloneExpense,
+                    consumptionCol: keyStandaloneCons
+                });
+            }
+        });
+    }
 
     let detectedDefaultYear = '';
     for (const m of monthsDetected) {
