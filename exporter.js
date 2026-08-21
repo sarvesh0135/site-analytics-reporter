@@ -136,6 +136,8 @@ window.exportToExcel = function() {
         "Region": s.region,
         "Site Name": s.siteName,
         "Customer Group": s.customerGroup,
+        "Sales Model": s.salesModel || 'N/A',
+        "Service Provider": s.serviceProvider || 'N/A',
         "Site Status": s.siteStatus,
         "Supervisor": s.supervisor,
         "Assistant Manager": s.assistantManager,
@@ -570,4 +572,3 @@ window.executeSelectedReportExport = function () {
 
     window.closeReportModal();
 };
-
