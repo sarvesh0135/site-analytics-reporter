@@ -164,68 +164,19 @@ window.parseExcelFile = function(file, callback) {
                 return;
             }
 
-            let finalSites = [];
-            let loadedSourceName = '';
-
-            // Find the sheet with the most site records (the main consolidated master sheet)
-            const masterSheet = sheetResults.reduce((max, sr) => (!max || sr.count > max.count) ? sr : max, null);
-
-            if (masterSheet && (masterSheet.count > 50 || sheetResults.length === 1)) {
-                finalSites = masterSheet.processed;
-                loadedSourceName = `${file.name} [${masterSheet.sheetName}] (${masterSheet.count} Sites)`;
+            if (sheetResults.length === 1) {
+                const sr = sheetResults[0];
+                sr.processed.forEach((s, idx) => { s.id = idx + 1; s.sno = idx + 1; });
+                callback(sr.processed, `${file.name} [${sr.sheetName}] (${sr.count} Sites)`);
             } else {
-                // Combine and consolidate sites across all tabs/sheets by siteCode
-                const siteMap = {};
-                const allDetectedMonthsSet = new Set();
-
-                sheetResults.forEach(sr => {
-                    sr.processed.forEach(s => {
-                        const codeKey = String(s.siteCode || s.code || s.siteName || '').trim().toUpperCase();
-                        if (!codeKey) return;
-
-                        if (!siteMap[codeKey]) {
-                            siteMap[codeKey] = {
-                                ...s,
-                                monthlyMetrics: { ...(s.monthlyMetrics || {}) }
-                            };
-                        } else {
-                            if (s.monthlyMetrics) {
-                                Object.keys(s.monthlyMetrics).forEach(mKey => {
-                                    siteMap[codeKey].monthlyMetrics[mKey] = s.monthlyMetrics[mKey];
-                                });
-                            }
-                        }
-                    });
-                });
-
-                const consolidatedSites = Object.values(siteMap).map(s => {
-                    let totB = 0, totE = 0, totC = 0;
-                    if (s.monthlyMetrics && Object.keys(s.monthlyMetrics).length > 0) {
-                        Object.keys(s.monthlyMetrics).forEach(mKey => {
-                            if (/\d{4}/.test(mKey)) {
-                                allDetectedMonthsSet.add(mKey);
-                                const m = s.monthlyMetrics[mKey];
-                                if (m) {
-                                    totB += (m.billing || 0);
-                                    totE += (m.expense || 0);
-                                    totC += (m.consumption || 0);
-                                }
-                            }
-                        });
-                        if (totB > 0 || totE > 0 || totC > 0) {
-                            s.totalBilling = totB;
-                            s.totalExpense = totE;
-                            s.totalConsumption = totC;
-                            s.activeBilling = totB;
-                            s.activeExpense = totE;
-                            s.activeConsumption = totC;
-                        }
-                    }
-                    return s;
-                });
-
-                finalSites = consolidatedSites.length > 0 ? consolidatedSites : sheetResults[0].processed;
-                loadedSourceName = `${file.name} [Consolidated ${sheetResults.length} Tabs]`;
+                // Multi-Tab Workbook: Open interactive sheet selector modal!
+                if (window.showSheetSelectionModal) {
+                    window.showSheetSelectionModal(sheetResults, file, callback);
+                } else {
+                    const maxSheet = sheetResults.reduce((max, sr) => (!max || sr.count > max.count) ? sr : max, null);
+                    maxSheet.processed.forEach((s, idx) => { s.id = idx + 1; s.sno = idx + 1; });
+                    callback(maxSheet.processed, `${file.name} [${maxSheet.sheetName}] (${maxSheet.count} Sites)`);
+                }
             }
 
             // Re-index site IDs

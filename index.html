@@ -1549,68 +1549,13 @@ window.parseExcelFile = function(file, callback) {
                 return;
             }
 
-            let finalSites = [];
-            let loadedSourceName = '';
-
-            // Find the sheet with the most site records (the main consolidated master sheet)
-            const masterSheet = sheetResults.reduce((max, sr) => (!max || sr.count > max.count) ? sr : max, null);
-
-            if (masterSheet && (masterSheet.count > 50 || sheetResults.length === 1)) {
-                finalSites = masterSheet.processed;
-                loadedSourceName = `${file.name} [${masterSheet.sheetName}] (${masterSheet.count} Sites)`;
+            if (sheetResults.length === 1) {
+                const sr = sheetResults[0];
+                sr.processed.forEach((s, idx) => { s.id = idx + 1; s.sno = idx + 1; });
+                callback(sr.processed, `${file.name} [${sr.sheetName}] (${sr.count} Sites)`);
             } else {
-                // Combine and consolidate sites across all tabs/sheets by siteCode
-                const siteMap = {};
-                const allDetectedMonthsSet = new Set();
-
-                sheetResults.forEach(sr => {
-                    sr.processed.forEach(s => {
-                        const codeKey = String(s.siteCode || s.code || s.siteName || '').trim().toUpperCase();
-                        if (!codeKey) return;
-
-                        if (!siteMap[codeKey]) {
-                            siteMap[codeKey] = {
-                                ...s,
-                                monthlyMetrics: { ...(s.monthlyMetrics || {}) }
-                            };
-                        } else {
-                            if (s.monthlyMetrics) {
-                                Object.keys(s.monthlyMetrics).forEach(mKey => {
-                                    siteMap[codeKey].monthlyMetrics[mKey] = s.monthlyMetrics[mKey];
-                                });
-                            }
-                        }
-                    });
-                });
-
-                const consolidatedSites = Object.values(siteMap).map(s => {
-                    let totB = 0, totE = 0, totC = 0;
-                    if (s.monthlyMetrics && Object.keys(s.monthlyMetrics).length > 0) {
-                        Object.keys(s.monthlyMetrics).forEach(mKey => {
-                            if (/\d{4}/.test(mKey)) {
-                                allDetectedMonthsSet.add(mKey);
-                                const m = s.monthlyMetrics[mKey];
-                                if (m) {
-                                    totB += (m.billing || 0);
-                                    totE += (m.expense || 0);
-                                    totC += (m.consumption || 0);
-                                }
-                            }
-                        });
-                        if (totB > 0 || totE > 0 || totC > 0) {
-                            s.totalBilling = totB;
-                            s.totalExpense = totE;
-                            s.totalConsumption = totC;
-                            s.activeBilling = totB;
-                            s.activeExpense = totE;
-                            s.activeConsumption = totC;
-                        }
-                    }
-                    return s;
-                });
-
-                finalSites = consolidatedSites.length > 0 ? consolidatedSites : sheetResults[0].processed;
-                loadedSourceName = `${file.name} [Consolidated ${sheetResults.length} Tabs]`;
+                // Multi-Tab Workbook: Open interactive sheet selector modal!
+                window.showSheetSelectionModal(sheetResults, file, callback);
             }
 
             // Re-index site IDs
@@ -5006,7 +4951,207 @@ window.applyColumnMapping = function() {
     alert("✅ Column mapping applied successfully! Data reloaded with your custom column mapping.");
 };
 
+// ═══════════════════════════════════════════════════════════
+// MULTI-TAB EXCEL SHEET SELECTOR CONTROLLER
+// ═══════════════════════════════════════════════════════════
+window.pendingSheetResults = null;
+window.pendingFile = null;
+window.pendingCallback = null;
+
+window.showSheetSelectionModal = function(sheetResults, file, callback) {
+    window.pendingSheetResults = sheetResults;
+    window.pendingFile = file;
+    window.pendingCallback = callback;
+
+    const modal = document.getElementById('sheetSelectionModal');
+    const container = document.getElementById('sheetButtonsContainer');
+    const subtitle = document.getElementById('sheetModalSubtitle');
+
+    if (!modal || !container) {
+        // Fallback: load largest sheet if modal elements not found
+        const maxSheet = sheetResults.reduce((max, sr) => (!max || sr.count > max.count) ? sr : max, null);
+        callback(maxSheet.processed, `${file.name} [${maxSheet.sheetName}] (${maxSheet.count} Sites)`);
+        return;
+    }
+
+    if (subtitle) {
+        subtitle.innerText = `${file.name} (${sheetResults.length} Tabs detected)`;
+    }
+
+    let totalCombinedSites = sheetResults.reduce((sum, sr) => sum + sr.count, 0);
+
+    let html = `
+        <button onclick="confirmSheetSelection('ALL')" class="w-full text-left p-4 rounded-xl bg-gradient-to-r from-emerald-950/90 to-teal-900/70 hover:from-emerald-900 hover:to-teal-800 text-white font-bold border border-emerald-500/40 shadow-xl transition flex items-center justify-between group">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-base shadow-inner">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                </div>
+                <div>
+                    <span class="block text-sm font-bold text-emerald-300">✨ Combine & Consolidate All ${sheetResults.length} Tabs</span>
+                    <span class="block text-[11px] text-gray-300 font-normal">Automatically merge site records & monthly metrics across all tabs</span>
+                </div>
+            </div>
+            <i class="fa-solid fa-chevron-right text-emerald-400 group-hover:translate-x-1 transition-transform"></i>
+        </button>
+
+        <div class="my-3 flex items-center gap-2">
+            <div class="h-px bg-gray-800 flex-1"></div>
+            <span class="text-[10px] uppercase tracking-wider font-semibold text-gray-500">Or Pick a Specific Sheet / Tab Below</span>
+            <div class="h-px bg-gray-800 flex-1"></div>
+        </div>
+    `;
+
+    sheetResults.forEach((sr, idx) => {
+        const isLikelyMaster = sr.count > 100;
+        html += `
+            <button onclick="confirmSheetSelection(${idx})" class="w-full text-left p-3.5 rounded-xl bg-gray-900/90 hover:bg-gray-800 text-gray-200 border ${isLikelyMaster ? 'border-brand-500/50 bg-brand-500/5 shadow-md' : 'border-gray-800'} transition flex items-center justify-between group">
+                <div class="flex items-center space-x-3">
+                    <div class="w-9 h-9 rounded-lg ${isLikelyMaster ? 'bg-brand-500/20 text-brand-400' : 'bg-gray-800 text-gray-400'} flex items-center justify-center text-sm font-semibold">
+                        <i class="${isLikelyMaster ? 'fa-solid fa-table-list' : 'fa-regular fa-file-excel'}"></i>
+                    </div>
+                    <div>
+                        <span class="block text-xs font-bold text-white group-hover:text-brand-300 transition">${sr.sheetName}</span>
+                        <span class="block text-[11px] text-gray-400">${sr.count.toLocaleString()} Site Records Found ${isLikelyMaster ? '• <strong class="text-brand-400 font-bold">Master Sheet</strong>' : ''}</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-1 text-xs font-bold text-brand-400 group-hover:translate-x-0.5 transition-transform">
+                    <span>Load Tab</span>
+                    <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                </div>
+            </button>
+        `;
+    });
+
+    container.innerHTML = html;
+    modal.classList.remove('hidden');
+};
+
+window.closeSheetSelectionModal = function() {
+    const modal = document.getElementById('sheetSelectionModal');
+    if (modal) modal.classList.add('hidden');
+};
+
+window.confirmSheetSelection = function(selectedIndex) {
+    closeSheetSelectionModal();
+    const sheetResults = window.pendingSheetResults;
+    const file = window.pendingFile;
+    const callback = window.pendingCallback;
+
+    if (!sheetResults || !callback) return;
+
+    if (selectedIndex === 'ALL') {
+        const siteMap = {};
+        const globalMonthsSet = new Set();
+
+        sheetResults.forEach(sr => {
+            sr.processed.forEach(s => {
+                if (s.monthlyMetrics) {
+                    Object.keys(s.monthlyMetrics).forEach(mKey => {
+                        if (/\d{4}/.test(mKey)) globalMonthsSet.add(mKey);
+                    });
+                }
+                const cCode = String(s.siteCode || s.code || '').trim().toUpperCase();
+                const cName = String(s.siteName || '').trim().toUpperCase();
+                const codeKey = (cCode && cCode !== 'UNASSIGNED' && !cCode.startsWith('ST-SITE'))
+                    ? cCode
+                    : (cName ? cName : (cCode || 'UNKNOWN'));
+
+                if (!siteMap[codeKey]) {
+                    siteMap[codeKey] = { ...s, monthlyMetrics: { ...(s.monthlyMetrics || {}) } };
+                } else {
+                    if (s.monthlyMetrics) {
+                        Object.keys(s.monthlyMetrics).forEach(mKey => {
+                            siteMap[codeKey].monthlyMetrics[mKey] = s.monthlyMetrics[mKey];
+                        });
+                    }
+                }
+            });
+        });
+
+        const consolidatedSites = Object.values(siteMap).map(s => {
+            let totB = 0, totE = 0, totC = 0;
+            if (s.monthlyMetrics && Object.keys(s.monthlyMetrics).length > 0) {
+                Object.keys(s.monthlyMetrics).forEach(mKey => {
+                    if (/\d{4}/.test(mKey)) {
+                        const m = s.monthlyMetrics[mKey];
+                        if (m) {
+                            totB += (m.billing || 0);
+                            totE += (m.expense || 0);
+                            totC += (m.consumption || 0);
+                        }
+                    }
+                });
+                if (totB > 0 || totE > 0 || totC > 0) {
+                    s.totalBilling = totB;
+                    s.totalExpense = totE;
+                    s.totalConsumption = totC;
+                    s.activeBilling = totB;
+                    s.activeExpense = totE;
+                    s.activeConsumption = totC;
+                }
+            }
+            return s;
+        });
+
+        if (globalMonthsSet.size > 0) {
+            const monthOrderMap = { Jan: 1, Feb: 2, Mar: 3, Apr: 4, May: 5, Jun: 6, Jul: 7, Aug: 8, Sep: 9, Oct: 10, Nov: 11, Dec: 12 };
+            window.MONTH_NAMES = Array.from(globalMonthsSet).sort((a, b) => {
+                const aShort = a.split(' ')[0];
+                const bShort = b.split(' ')[0];
+                const aYear = a.match(/20\d{2}/) ? parseInt(a.match(/20\d{2}/)[0]) : 2026;
+                const bYear = b.match(/20\d{2}/) ? parseInt(b.match(/20\d{2}/)[0]) : 2026;
+                if (aYear !== bYear) return aYear - bYear;
+                return (monthOrderMap[aShort] || 99) - (monthOrderMap[bShort] || 99);
+            });
+        }
+
+        const finalSites = consolidatedSites.length > 0 ? consolidatedSites : sheetResults[0].processed;
+        finalSites.forEach((s, idx) => { s.id = idx + 1; s.sno = idx + 1; });
+        callback(finalSites, `${file.name} [Consolidated ${sheetResults.length} Tabs] (${finalSites.length} Sites)`);
+    } else {
+        const sr = sheetResults[selectedIndex];
+        if (sr) {
+            sr.processed.forEach((s, idx) => { s.id = idx + 1; s.sno = idx + 1; });
+            callback(sr.processed, `${file.name} [Tab: ${sr.sheetName}] (${sr.count} Sites)`);
+        }
+    }
+};
+
 </script>
+
+<!-- Sheet / Tab Selection Modal for Multi-Tab Excel Workbooks -->
+<div id="sheetSelectionModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md hidden p-4">
+    <div class="glass-panel w-full max-w-xl rounded-2xl border border-gray-700 shadow-2xl p-6 space-y-5 animate-fade-in">
+        <div class="flex items-center justify-between border-b border-gray-800 pb-3">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-brand-500/20 border border-brand-500/40 flex items-center justify-center text-brand-400">
+                    <i class="fa-solid fa-layer-group text-lg"></i>
+                </div>
+                <div>
+                    <h3 class="text-base font-bold text-white">Select Sheet / Tab to Load</h3>
+                    <p id="sheetModalSubtitle" class="text-xs text-gray-400">Multiple tabs detected in your Excel workbook</p>
+                </div>
+            </div>
+            <button onclick="closeSheetSelectionModal()" class="text-gray-400 hover:text-white p-2 rounded-lg hover:bg-gray-800 transition">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+
+        <p class="text-xs text-gray-300">
+            Your Excel workbook has multiple tabs. Please select which sheet to analyze, or combine all tabs into a single consolidated view:
+        </p>
+
+        <div id="sheetButtonsContainer" class="space-y-2 max-h-80 overflow-y-auto pr-1">
+            <!-- Sheet Option Buttons Rendered Here Dynamically -->
+        </div>
+
+        <div class="pt-3 border-t border-gray-800 flex justify-end">
+            <button onclick="closeSheetSelectionModal()" class="px-4 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs font-semibold border border-gray-700 transition">
+                Cancel
+            </button>
+        </div>
+    </div>
+</div>
 
 </body>
 </html>
