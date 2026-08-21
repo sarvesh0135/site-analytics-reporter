@@ -93,11 +93,30 @@ window.parseExcelFile = function(file, callback) {
                     const prevRow = headerRowIdx > 0 ? allRows[headerRowIdx - 1] : null;
                     const colIndexMap = {};
 
+                    const isSummaryOrMetaHeader = (str) => {
+                        if (!str) return false;
+                        const cl = String(str).toLowerCase().trim();
+                        return ['site', 'code', 'sno', 'sl', 'region', 'status', 'manager', 'total', 'avg', 'average', 'summary', 'model', 'provider', 'group', 'remarks', 'note', 'stand alone', 'standalone'].some(kw => cl.includes(kw));
+                    };
+
+                    let lastParentH = '';
                     rawHeaders.forEach((h, colIdx) => {
                         let hClean = String(h || '').trim();
-                        let parentH = prevRow && prevRow[colIdx] ? String(prevRow[colIdx]).trim() : '';
+                        let currentParent = prevRow && prevRow[colIdx] ? String(prevRow[colIdx]).trim() : '';
 
-                        if (parentH && parentH !== hClean && !parentH.toLowerCase().includes('site') && !parentH.toLowerCase().includes('sno')) {
+                        if (currentParent && currentParent !== '__EMPTY' && !isSummaryOrMetaHeader(currentParent)) {
+                            lastParentH = currentParent;
+                        } else if (currentParent && isSummaryOrMetaHeader(currentParent)) {
+                            lastParentH = '';
+                        }
+
+                        if (isSummaryOrMetaHeader(hClean)) {
+                            lastParentH = '';
+                        }
+
+                        let parentH = currentParent || lastParentH;
+
+                        if (parentH && parentH !== hClean && !isSummaryOrMetaHeader(parentH)) {
                             if (hClean && hClean !== '__EMPTY') {
                                 hClean = `${parentH}_${hClean}`;
                             } else if (parentH) {
