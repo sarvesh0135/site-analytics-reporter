@@ -310,8 +310,6 @@ window.normalizeRawData = function(rows, customMapping = null) {
         { name: 'Dec', keys: ['december', 'dec', '12/', '12-', '/12/', '-12-', '12_', '_12_', '2026-12', '2027-12', 'month 12', 'month-12', 'm12'] }
     ];
 
-    const detectedMonthNames = [];
-
     monthPatterns.forEach(mp => {
         let bCol = "", eCol = "", cCol = "";
         keys.forEach(k => {
@@ -338,19 +336,39 @@ window.normalizeRawData = function(rows, customMapping = null) {
         if (bCol || eCol || cCol) {
             let yearLabel = '';
             const anyCol = bCol || eCol || cCol;
-            const yearMatch = anyCol.match(/20\d{2}/);
-            if (yearMatch) yearLabel = ' ' + yearMatch[0];
+            const yearMatch4 = anyCol.match(/20\d{2}/);
+            const yearMatch2 = anyCol.match(/(?:^|[\s/_\-])([2-3]\d)(?:$|[\s/_\-])/);
+            if (yearMatch4) {
+                yearLabel = ' ' + yearMatch4[0];
+            } else if (yearMatch2) {
+                yearLabel = ' 20' + yearMatch2[1];
+            }
 
-            const monthKey = mp.name + yearLabel;
-            detectedMonthNames.push(monthKey);
             monthsDetected.push({
-                name: monthKey,
+                name: mp.name,
+                yearLabel: yearLabel,
                 shortName: mp.name,
                 billingCol: bCol,
                 expenseCol: eCol,
                 consumptionCol: cCol
             });
         }
+    });
+
+    let detectedDefaultYear = '';
+    for (const m of monthsDetected) {
+        if (m.yearLabel) {
+            detectedDefaultYear = m.yearLabel;
+            break;
+        }
+    }
+    if (!detectedDefaultYear) detectedDefaultYear = ' 2026';
+
+    const detectedMonthNames = [];
+    monthsDetected.forEach(m => {
+        if (!m.yearLabel) m.yearLabel = detectedDefaultYear;
+        m.name = m.shortName + m.yearLabel;
+        detectedMonthNames.push(m.name);
     });
 
     if (detectedMonthNames.length > 0) {

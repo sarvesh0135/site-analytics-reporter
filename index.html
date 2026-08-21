@@ -1388,7 +1388,8 @@ if (typeof window.formatRupee !== 'function') {
     };
 }
 
-window.MONTH_NAMES = ['JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE', 'JULY', 'AUGUST'];
+// MONTH_NAMES is dynamically set by normalizeRawData() after parsing the uploaded file
+window.MONTH_NAMES = [];
 
 window.parseExcelFile = function(file, callback) {
     if (typeof XLSX === 'undefined') {
@@ -1704,8 +1705,6 @@ window.normalizeRawData = function(rows, customMapping = null) {
         { name: 'Dec', keys: ['december', 'dec', '12/', '12-', '/12/', '-12-', '12_', '_12_', '2026-12', '2027-12', 'month 12', 'month-12', 'm12'] }
     ];
 
-    const detectedMonthNames = [];
-
     monthPatterns.forEach(mp => {
         let bCol = "", eCol = "", cCol = "";
         keys.forEach(k => {
@@ -1732,19 +1731,39 @@ window.normalizeRawData = function(rows, customMapping = null) {
         if (bCol || eCol || cCol) {
             let yearLabel = '';
             const anyCol = bCol || eCol || cCol;
-            const yearMatch = anyCol.match(/20\d{2}/);
-            if (yearMatch) yearLabel = ' ' + yearMatch[0];
+            const yearMatch4 = anyCol.match(/20\d{2}/);
+            const yearMatch2 = anyCol.match(/(?:^|[\s/_\-])([2-3]\d)(?:$|[\s/_\-])/);
+            if (yearMatch4) {
+                yearLabel = ' ' + yearMatch4[0];
+            } else if (yearMatch2) {
+                yearLabel = ' 20' + yearMatch2[1];
+            }
 
-            const monthKey = mp.name + yearLabel;
-            detectedMonthNames.push(monthKey);
             monthsDetected.push({
-                name: monthKey,
+                name: mp.name,
+                yearLabel: yearLabel,
                 shortName: mp.name,
                 billingCol: bCol,
                 expenseCol: eCol,
                 consumptionCol: cCol
             });
         }
+    });
+
+    let detectedDefaultYear = '';
+    for (const m of monthsDetected) {
+        if (m.yearLabel) {
+            detectedDefaultYear = m.yearLabel;
+            break;
+        }
+    }
+    if (!detectedDefaultYear) detectedDefaultYear = ' 2026';
+
+    const detectedMonthNames = [];
+    monthsDetected.forEach(m => {
+        if (!m.yearLabel) m.yearLabel = detectedDefaultYear;
+        m.name = m.shortName + m.yearLabel;
+        detectedMonthNames.push(m.name);
     });
 
     if (detectedMonthNames.length > 0) {
@@ -2932,7 +2951,7 @@ window.openSiteDetailModal = function(siteCode) {
             const shortM = mKey.split(' ')[0];
             m = site.monthlyMetrics[shortM];
         }
-        if (m && (m.billing > 0 || m.expense > 0 || m.consumption > 0)) {
+        if (m) {
             const mProfit = m.billing - (m.expense + m.consumption);
             const mMargin = m.billing > 0 ? ((mProfit / m.billing) * 100).toFixed(2) : '0.00';
             const shortM = mKey.split(' ')[0];
@@ -4439,13 +4458,32 @@ function populateFilterDropdowns(sites) {
 
     if (selMonth) {
         const rawMonths = Array.from(monthsSet);
-        // Deduplicate: Keep full year-stamped keys (e.g. "Jan 2026") over short keys ("Jan")
-        const yearStampedMonths = rawMonths.filter(m => /\d{4}/.test(m));
-        const finalMonthList = yearStampedMonths.length > 0 ? yearStampedMonths : rawMonths;
+        const monthOrderMap = { Jan: 1, Feb: 2, Mar: 3, Apr: 4, May: 5, Jun: 6, Jul: 7, Aug: 8, Sep: 9, Oct: 10, Nov: 11, Dec: 12 };
 
-        if (finalMonthList.length > 0) {
+        let validMonths = rawMonths.filter(m => {
+            const shortName = m.split(' ')[0];
+            return monthOrderMap[shortName] !== undefined;
+        });
+
+        const hasYearStamped = validMonths.some(m => /\d{4}/.test(m));
+        if (hasYearStamped) {
+            validMonths = validMonths.filter(m => /\d{4}/.test(m));
+        }
+
+        validMonths.sort((a, b) => {
+            const aShort = a.split(' ')[0];
+            const bShort = b.split(' ')[0];
+            const aYearMatch = a.match(/20\d{2}/);
+            const bYearMatch = b.match(/20\d{2}/);
+            const aYear = aYearMatch ? parseInt(aYearMatch[0]) : 2026;
+            const bYear = bYearMatch ? parseInt(bYearMatch[0]) : 2026;
+            if (aYear !== bYear) return aYear - bYear;
+            return (monthOrderMap[aShort] || 99) - (monthOrderMap[bShort] || 99);
+        });
+
+        if (validMonths.length > 0) {
             selMonth.innerHTML = '<option value="ALL">All Months (Total/Avg)</option>' +
-                finalMonthList.map(m => `<option value="${m}">${m}</option>`).join('');
+                validMonths.map(m => `<option value="${m}">${m}</option>`).join('');
         }
     }
 }
@@ -4563,14 +4601,40 @@ function updateExecutiveKPIs(sites) {
     const expenseRatio = totalBilling > 0 ? ((totalExpense / totalBilling) * 100).toFixed(1) : "0.0";
     const consumptionRatio = totalBilling > 0 ? ((totalConsumption / totalBilling) * 100).toFixed(1) : "0.0";
 
-    const mn = (window.MONTH_NAMES || []).filter(m => /\d{4}/.test(m));
+    const activeMonthsInSites = new Set();
+    sites.forEach(s => {
+        if (s.monthlyMetrics) {
+            Object.keys(s.monthlyMetrics).forEach(mKey => {
+                const metric = s.monthlyMetrics[mKey];
+                if (metric && (metric.billing > 0 || metric.expense > 0 || metric.consumption > 0)) {
+                    if (/\d{4}/.test(mKey)) activeMonthsInSites.add(mKey);
+                }
+            });
+        }
+    });
+
+    const monthOrderMap = { Jan: 1, Feb: 2, Mar: 3, Apr: 4, May: 5, Jun: 6, Jul: 7, Aug: 8, Sep: 9, Oct: 10, Nov: 11, Dec: 12 };
+    const sortedActiveMonths = Array.from(activeMonthsInSites).sort((a, b) => {
+        const aShort = a.split(' ')[0];
+        const bShort = b.split(' ')[0];
+        const aYear = a.match(/20\d{2}/) ? parseInt(a.match(/20\d{2}/)[0]) : 2026;
+        const bYear = b.match(/20\d{2}/) ? parseInt(b.match(/20\d{2}/)[0]) : 2026;
+        if (aYear !== bYear) return aYear - bYear;
+        return (monthOrderMap[aShort] || 99) - (monthOrderMap[bShort] || 99);
+    });
+
     let monthRangeDisplay = '';
     if (window.selectedMonth && window.selectedMonth !== 'ALL') {
         monthRangeDisplay = window.selectedMonth;
-    } else if (mn.length > 0) {
-        const first = mn[0].split(' ')[0];
-        const last  = mn[mn.length - 1].split(' ')[0];
-        const year  = mn[mn.length - 1].split(' ')[1] || '';
+    } else if (sortedActiveMonths.length > 0) {
+        const first = sortedActiveMonths[0].split(' ')[0];
+        const last  = sortedActiveMonths[sortedActiveMonths.length - 1].split(' ')[0];
+        const year  = sortedActiveMonths[sortedActiveMonths.length - 1].split(' ')[1] || '';
+        monthRangeDisplay = first === last ? `${first} ${year}` : `${first}–${last} ${year}`;
+    } else if (window.MONTH_NAMES && window.MONTH_NAMES.length > 0) {
+        const first = window.MONTH_NAMES[0].split(' ')[0];
+        const last  = window.MONTH_NAMES[window.MONTH_NAMES.length - 1].split(' ')[0];
+        const year  = window.MONTH_NAMES[window.MONTH_NAMES.length - 1].split(' ')[1] || '';
         monthRangeDisplay = first === last ? `${first} ${year}` : `${first}–${last} ${year}`;
     } else {
         monthRangeDisplay = 'All Months';
