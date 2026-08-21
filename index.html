@@ -2906,22 +2906,31 @@ window.openSiteDetailModal = function(siteCode) {
     else if (b >= portfolioAvgBill) benchmarkTag = 'High Scale Site';
     else benchmarkTag = 'Small Scale Site';
 
-    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     const monthFull = { Jan:'January', Feb:'February', Mar:'March', Apr:'April', May:'May', Jun:'June', Jul:'July', Aug:'August', Sep:'September', Oct:'October', Nov:'November', Dec:'December' };
 
+    let monthKeys = (window.MONTH_NAMES && window.MONTH_NAMES.length > 0)
+        ? window.MONTH_NAMES.filter(m => /\d{4}/.test(m))
+        : ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+    if (monthKeys.length === 0) {
+        monthKeys = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    }
+
     let monthRowsHtml = '';
-    months.forEach(mKey => {
+    monthKeys.forEach(mKey => {
         let m = site.monthlyMetrics ? site.monthlyMetrics[mKey] : null;
         if (!m && site.monthlyMetrics) {
-            const foundK = Object.keys(site.monthlyMetrics).find(k => k.toLowerCase().includes(mKey.toLowerCase()));
-            if (foundK) m = site.monthlyMetrics[foundK];
+            const shortM = mKey.split(' ')[0];
+            m = site.monthlyMetrics[shortM];
         }
         if (m && (m.billing > 0 || m.expense > 0 || m.consumption > 0)) {
             const mProfit = m.billing - (m.expense + m.consumption);
             const mMargin = m.billing > 0 ? ((mProfit / m.billing) * 100).toFixed(2) : '0.00';
+            const shortM = mKey.split(' ')[0];
+            const displayLabel = monthFull[shortM] || mKey;
             monthRowsHtml += `
                 <tr class="hover:bg-gray-900/60 transition">
-                    <td class="py-2 px-3 font-sans font-bold text-white">${monthFull[mKey]}</td>
+                    <td class="py-2 px-3 font-sans font-bold text-white">${displayLabel}</td>
                     <td class="py-2 px-3 text-right">${formatRupee(m.billing)}</td>
                     <td class="py-2 px-3 text-right text-red-400">${formatRupee(m.expense)}</td>
                     <td class="py-2 px-3 text-right text-purple-400">${formatRupee(m.consumption)}</td>
@@ -4034,13 +4043,24 @@ document.addEventListener('DOMContentLoaded', () => {
     if (cached) {
         try {
             const payload = JSON.parse(cached);
-            if (payload && payload.sites && payload.sites.length > 0) {
-                // If cached payload contains > 5,000 corrupt/dummy sites, purge cache automatically
+            // Purge any old cache versions (pre-v3) that may contain phantom months
+            if (!payload || payload.schema !== 'v3') {
+                localStorage.removeItem('site_analytics_cached_dataset');
+                window.loadSampleData();
+                return;
+            }
+            if (payload.sites && payload.sites.length > 0) {
                 if (payload.sites.length > 5000) {
                     localStorage.removeItem('site_analytics_cached_dataset');
                     window.loadSampleData();
                     return;
                 }
+
+                // Restore MONTH_NAMES from cached payload
+                if (payload.monthNames && Array.isArray(payload.monthNames) && payload.monthNames.length > 0) {
+                    window.MONTH_NAMES = payload.monthNames;
+                }
+
                 document.getElementById('datasetTitle').innerText = `Restored Session: ${payload.filename || 'Uploaded File'} (${payload.sites.length} Sites)`;
                 window.setActiveDataset(payload.sites, payload.filename, false);
                 return;
@@ -4305,8 +4325,10 @@ window.setActiveDataset = function(sites, sourceName = '', shouldCache = true) {
     if (shouldCache && sites && sites.length > 0) {
         try {
             const payload = {
+                schema: 'v3',  // bump version to purge stale caches with phantom months
                 filename: sourceName || 'Uploaded Excel Data',
                 timestamp: new Date().toISOString(),
+                monthNames: window.MONTH_NAMES || [],
                 sites: sites
             };
             localStorage.setItem('site_analytics_cached_dataset', JSON.stringify(payload));
@@ -4377,14 +4399,23 @@ function populateFilterDropdowns(sites) {
     const regions = new Set();
     const statuses = new Set();
     const srManagers = new Set();
-    const monthsSet = new Set(window.MONTH_NAMES || []);
+    const monthsSet = new Set();
+
+    if (window.MONTH_NAMES && Array.isArray(window.MONTH_NAMES)) {
+        window.MONTH_NAMES.forEach(m => monthsSet.add(m));
+    }
 
     sites.forEach(s => {
         if (s.region) regions.add(s.region);
         if (s.siteStatus) statuses.add(s.siteStatus);
         if (s.srManager) srManagers.add(s.srManager);
         if (s.monthlyMetrics) {
-            Object.keys(s.monthlyMetrics).forEach(m => monthsSet.add(m));
+            Object.keys(s.monthlyMetrics).forEach(m => {
+                const metric = s.monthlyMetrics[m];
+                if (metric && (metric.billing > 0 || metric.expense > 0 || metric.consumption > 0)) {
+                    monthsSet.add(m);
+                }
+            });
         }
     });
 
@@ -4397,12 +4428,15 @@ function populateFilterDropdowns(sites) {
     selSrManager.innerHTML = '<option value="ALL">All Sr Managers</option>' + 
         Array.from(srManagers).sort().map(sr => `<option value="${sr}">${sr}</option>`).join('');
 
-    // Dynamically populate month filter from detected months in the uploaded file
     if (selMonth) {
-        const sortedMonths = Array.from(monthsSet);
-        if (sortedMonths.length > 0) {
+        const rawMonths = Array.from(monthsSet);
+        // Deduplicate: Keep full year-stamped keys (e.g. "Jan 2026") over short keys ("Jan")
+        const yearStampedMonths = rawMonths.filter(m => /\d{4}/.test(m));
+        const finalMonthList = yearStampedMonths.length > 0 ? yearStampedMonths : rawMonths;
+
+        if (finalMonthList.length > 0) {
             selMonth.innerHTML = '<option value="ALL">All Months (Total/Avg)</option>' +
-                sortedMonths.map(m => `<option value="${m}">${m}</option>`).join('');
+                finalMonthList.map(m => `<option value="${m}">${m}</option>`).join('');
         }
     }
 }
@@ -4442,15 +4476,19 @@ window.applyFilters = function() {
         let cVal = s.totalConsumption;
 
         if (monthVal !== 'ALL' && s.monthlyMetrics) {
+            // Try exact year-stamped key first (e.g. "Jul 2026"), then short key ("Jul")
             let mData = s.monthlyMetrics[monthVal];
             if (!mData) {
-                const foundKey = Object.keys(s.monthlyMetrics).find(k => k.toLowerCase().startsWith(monthVal.toLowerCase()) || monthVal.toLowerCase().startsWith(k.toLowerCase()));
-                if (foundKey) mData = s.monthlyMetrics[foundKey];
+                const shortKey = monthVal.split(' ')[0];
+                mData = s.monthlyMetrics[shortKey];
             }
             if (mData) {
                 bVal = mData.billing;
                 eVal = mData.expense;
                 cVal = mData.consumption;
+            } else {
+                // If this month has no data, zero out so it doesn't show phantom values
+                bVal = 0; eVal = 0; cVal = 0;
             }
         }
 
