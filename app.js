@@ -458,6 +458,10 @@ window.applyFilters = function() {
                 bVal = mData.billing;
                 eVal = mData.expense;
                 cVal = mData.consumption;
+            } else {
+                bVal = 0;
+                eVal = 0;
+                cVal = 0;
             }
         }
 
