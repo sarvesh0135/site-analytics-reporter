@@ -1509,6 +1509,12 @@ window.parseExcelFile = function(file, callback) {
                         }
                         let parentH = currentParent || lastParentH;
 
+                        // Ignore parent headers that are formatted as full Date strings (e.g. Sat Feb 28 2026 23:59:50 GMT+0530)
+                        const isFullDateString = parentH.includes('GMT') || parentH.includes('Time') || parentH.includes('Standard') || /^[A-Za-z]{3}\s+[A-Za-z]{3}\s+\d+/.test(parentH);
+                        if (parentH && isFullDateString) {
+                            parentH = '';
+                        }
+
                         if (parentH && parentH !== hClean && !parentH.toLowerCase().includes('site') && !parentH.toLowerCase().includes('sno') && !parentH.toLowerCase().includes('code')) {
                             if (hClean && hClean !== '__EMPTY') {
                                 hClean = `${parentH}_${hClean}`;
