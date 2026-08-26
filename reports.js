@@ -635,20 +635,50 @@ window.renderMonthlyTrendsReport = function(sites) {
     };
 
     const monthOrder = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    
+    const cleanMonthName = (mStr) => {
+        if (!mStr || typeof mStr !== 'string') return "";
+        const clean = mStr.trim().toLowerCase();
+        if (clean.startsWith('jan')) return 'Jan';
+        if (clean.startsWith('feb')) return 'Feb';
+        if (clean.startsWith('mar')) return 'Mar';
+        if (clean.startsWith('apr')) return 'Apr';
+        if (clean.startsWith('may')) return 'May';
+        if (clean.startsWith('jun')) return 'Jun';
+        if (clean.startsWith('jul')) return 'Jul';
+        if (clean.startsWith('aug')) return 'Aug';
+        if (clean.startsWith('sep')) return 'Sep';
+        if (clean.startsWith('oct')) return 'Oct';
+        if (clean.startsWith('nov')) return 'Nov';
+        if (clean.startsWith('dec')) return 'Dec';
+        return mStr;
+    };
 
-    const months = Array.from(monthsSet).sort((a, b) => {
-        const partsA = a.split(' ');
-        const partsB = b.split(' ');
-        const yearA = parseInt(partsA[1]) || 2026;
-        const yearB = parseInt(partsB[1]) || 2026;
-        if (yearA !== yearB) return yearA - yearB;
-        return monthOrder.indexOf(partsA[0]) - monthOrder.indexOf(partsB[0]);
+    const months = Array.from(monthsSet).filter(Boolean).sort((a, b) => {
+        try {
+            const partsA = String(a).split(' ');
+            const partsB = String(b).split(' ');
+            const yearA = parseInt(partsA[1]) || 2026;
+            const yearB = parseInt(partsB[1]) || 2026;
+            if (yearA !== yearB) return yearA - yearB;
+            
+            const idxA = monthOrder.indexOf(cleanMonthName(partsA[0]));
+            const idxB = monthOrder.indexOf(cleanMonthName(partsB[0]));
+            return idxA - idxB;
+        } catch (err) {
+            console.error("Sorting error:", err);
+            return 0;
+        }
     }).map(m => {
-        const parts = m.split(' ');
-        const shortName = parts[0];
-        const yearStr = parts[1] ? ' ' + parts[1] : '';
-        const label = (longNames[shortName] || shortName) + yearStr;
-        return { key: m, label: label };
+        try {
+            const parts = String(m).split(' ');
+            const shortName = cleanMonthName(parts[0]);
+            const yearStr = parts[1] ? ' ' + parts[1] : '';
+            const label = (longNames[shortName] || shortName) + yearStr;
+            return { key: m, label: label };
+        } catch (err) {
+            return { key: m, label: String(m) };
+        }
     });
 
     const monthlyTotals = months.map(({ key, label }) => {

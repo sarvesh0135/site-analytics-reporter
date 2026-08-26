@@ -138,7 +138,7 @@ window.updateMonthlyTrendsChart = function(monthlyTotals) {
         window.chartInstances.monthlyTrends.destroy();
     }
 
-    const labels = monthlyTotals.map(m => m.label || (m.month ? m.month + ' 2026' : m.key));
+    const labels = monthlyTotals.map(m => m.label || m.key);
     const billings = monthlyTotals.map(m => m.billing);
     const expenses = monthlyTotals.map(m => m.expense);
     const consumptions = monthlyTotals.map(m => m.consumption);
