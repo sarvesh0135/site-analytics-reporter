@@ -93,30 +93,16 @@ window.parseExcelFile = function(file, callback) {
                     const prevRow = headerRowIdx > 0 ? allRows[headerRowIdx - 1] : null;
                     const colIndexMap = {};
 
-                    const isSummaryOrMetaHeader = (str) => {
-                        if (!str) return false;
-                        const cl = String(str).toLowerCase().trim();
-                        return ['site', 'code', 'sno', 'sl', 'region', 'status', 'manager', 'total', 'avg', 'average', 'summary', 'model', 'provider', 'group', 'remarks', 'note', 'stand alone', 'standalone'].some(kw => cl.includes(kw));
-                    };
-
                     let lastParentH = '';
                     rawHeaders.forEach((h, colIdx) => {
                         let hClean = String(h || '').trim();
                         let currentParent = prevRow && prevRow[colIdx] ? String(prevRow[colIdx]).trim() : '';
-
-                        if (currentParent && currentParent !== '__EMPTY' && !isSummaryOrMetaHeader(currentParent)) {
+                        if (currentParent && currentParent !== '__EMPTY' && !currentParent.toLowerCase().includes('site') && !currentParent.toLowerCase().includes('sno') && !currentParent.toLowerCase().includes('code')) {
                             lastParentH = currentParent;
-                        } else if (currentParent && isSummaryOrMetaHeader(currentParent)) {
-                            lastParentH = '';
                         }
-
-                        if (isSummaryOrMetaHeader(hClean)) {
-                            lastParentH = '';
-                        }
-
                         let parentH = currentParent || lastParentH;
 
-                        if (parentH && parentH !== hClean && !isSummaryOrMetaHeader(parentH)) {
+                        if (parentH && parentH !== hClean && !parentH.toLowerCase().includes('site') && !parentH.toLowerCase().includes('sno') && !parentH.toLowerCase().includes('code')) {
                             if (hClean && hClean !== '__EMPTY') {
                                 hClean = `${parentH}_${hClean}`;
                             } else if (parentH) {
@@ -148,9 +134,9 @@ window.parseExcelFile = function(file, callback) {
                         return obj;
                     });
 
-                    const processed = window.normalizeRawData(rawJson, null, name);
+                    const processed = window.normalizeRawData(rawJson);
                     if (processed.length > 0) {
-                        sheetResults.push({ processed, sheetName: name, count: processed.length, rawJson });
+                        sheetResults.push({ processed, sheetName: name, count: processed.length, rawJson: rawJson });
                     }
                 } catch (sErr) {
                     console.warn(`[Parser] Error reading sheet '${name}':`, sErr);
@@ -164,29 +150,19 @@ window.parseExcelFile = function(file, callback) {
                 return;
             }
 
+            // Save global workbook references for user callbacks from UI
+            window.pendingSheetResults = sheetResults;
+            window.pendingFileName = file.name;
+            window.pendingParserCallback = callback;
+
+            // Route 1: Single worksheet - load directly
             if (sheetResults.length === 1) {
-                const sr = sheetResults[0];
-                sr.processed.forEach((s, idx) => { s.id = idx + 1; s.sno = idx + 1; });
-                callback(sr.processed, `${file.name} [${sr.sheetName}] (${sr.count} Sites)`);
-            } else {
-                // Multi-Tab Workbook: Open interactive sheet selector modal!
-                if (window.showSheetSelectionModal) {
-                    window.showSheetSelectionModal(sheetResults, file, callback);
-                } else {
-                    const maxSheet = sheetResults.reduce((max, sr) => (!max || sr.count > max.count) ? sr : max, null);
-                    maxSheet.processed.forEach((s, idx) => { s.id = idx + 1; s.sno = idx + 1; });
-                    callback(maxSheet.processed, `${file.name} [${maxSheet.sheetName}] (${maxSheet.count} Sites)`);
-                }
+                window.loadSelectedWorksheet(0);
+                return;
             }
 
-            // Re-index site IDs
-            finalSites.forEach((s, idx) => {
-                s.id = idx + 1;
-                s.sno = idx + 1;
-            });
-
-            console.log(`[Parser] Successfully loaded ${finalSites.length} sites from file '${file.name}'`);
-            callback(finalSites, loadedSourceName);
+            // Route 2: Multiple worksheets - trigger the interactive Sheet Selection Modal
+            window.showSheetSelectionModal(sheetResults, file.name);
 
 
 
@@ -204,13 +180,14 @@ window.parseExcelFile = function(file, callback) {
 
 
 
-window.normalizeRawData = function(rows, customMapping = null, sheetName = '') {
+window.normalizeRawData = function(rows, customMapping = null) {
     if (!rows || rows.length === 0) return [];
 
     // Extract headers from first row keys
     const sample = rows[0];
     const keys = Object.keys(sample);
 
+    // Check for saved column mapping if none passed explicitly
     if (!customMapping) {
         try {
             const saved = localStorage.getItem('site_analytics_custom_mapping');
@@ -218,6 +195,14 @@ window.normalizeRawData = function(rows, customMapping = null, sheetName = '') {
         } catch (e) {}
     }
 
+    // Helper to validate that a custom mapped key actually exists in the current sheet's keys
+    const getMappedKey = (field) => {
+        const val = customMapping?.[field];
+        if (val && keys.includes(val)) return val;
+        return null;
+    };
+
+    // Ultra-flexible key finders with exhaustive candidate variations
     const findKey = (candidates, exclude = []) => {
         return keys.find(k => {
             const clean = k.trim().toLowerCase();
@@ -240,111 +225,110 @@ window.normalizeRawData = function(rows, customMapping = null, sheetName = '') {
         }) || "";
     };
 
-    const keySno        = customMapping?.sno || findKey(['s.no', 'sno', 'sl no', 'sr no', 's. no', 'serial', 'sl.no', 's_no', 'index', '#']);
-    const keySiteCode   = customMapping?.siteCode || findKey(['site code', 'siteid', 'site_code', 'site id', 'site_id', 'site no', 'unit code', 'branch code', 'location code', 'site number', 'unit no', 'code', 'site_id']);
-    const keyRegion     = customMapping?.region || findKey(['region', 'zone', 'state', 'circle', 'area', 'reg', 'territory', 'city']);
+    const keySno        = getMappedKey('sno') || findKey(['s.no', 'sno', 'sl no', 'sr no', 's. no', 'serial', 'sl.no', 's_no', 'index', '#']);
+    const keySiteCode   = getMappedKey('siteCode') || findKey(['site code', 'siteid', 'site_code', 'site id', 'site_id', 'site no', 'unit code', 'branch code', 'location code', 'site number', 'unit no', 'code']);
+    const keyRegion     = getMappedKey('region') || findKey(['region', 'zone', 'state', 'circle', 'area', 'reg', 'territory', 'city']);
     
-    const keySiteName = customMapping?.siteName || findKeyExact(
+    const keySiteName = getMappedKey('siteName') || findKeyExact(
         ['site name', 'sitename', 'site_name', 'unit name', 'branch name', 'location name',
          'property name', 'facility name', 'client name', 'account name', 'project name', 'building name',
          'site', 'name', 'unit', 'location', 'property', 'facility', 'building', 'project', 'client', 'account'],
         [keySiteCode]
     );
 
-    const keyCustGroup  = customMapping?.custGroup || findKey(['customer group', 'customergroup', 'customer_group', 'client group', 'client', 'customer', 'account']);
-    const keyStatus     = customMapping?.status || findKey(['site status', 'sitestatus', 'status', 'active status']);
-    const keySupervisor = customMapping?.supervisor || findKey(['supervisor', 'super visor', 'field supervisor']);
+    const keyCustGroup  = getMappedKey('custGroup') || findKey(['customer group', 'customergroup', 'customer_group', 'client group', 'client', 'customer', 'account']);
+    const keyStatus     = getMappedKey('status') || findKey(['site status', 'sitestatus', 'status', 'active status']);
+    const keySupervisor = getMappedKey('supervisor') || findKey(['supervisor', 'super visor', 'field supervisor']);
 
-    const keySalesModel = customMapping?.salesModel || findKey(['sales model', 'sales_model', 'salesmodel', 'business model', 'model']);
-    const keyServiceProvider = customMapping?.serviceProvider || findKey(['service provider', 'service_provider', 'serviceprovider', 'provider', 'vendor', 'contractor']);
-
-    const keySrManager  = customMapping?.srManager || keys.find(k => {
+    // Precise matches for management hierarchy
+    const keySrManager  = getMappedKey('srManager') || keys.find(k => {
         const cl = k.trim().toLowerCase();
         return (cl.includes('sr') || cl.includes('senior')) && cl.includes('manager');
     }) || findKey(['sr manager', 'sr. manager', 'senior manager', 'sr mgr']) || "";
 
-    const keyAM = customMapping?.am || keys.find(k => {
+    const keyAM = getMappedKey('am') || keys.find(k => {
         const cl = k.trim().toLowerCase();
         return cl.includes('assistant') && cl.includes('manager');
     }) || findKey(['assistant manager', 'assitant manager', 'ast manager', 'am']) || "";
 
-    const keyManager = customMapping?.manager || keys.find(k => {
+    const keyManager = getMappedKey('manager') || keys.find(k => {
         const cl = k.trim().toLowerCase();
         return cl.includes('manager')
             && !cl.includes('sr') && !cl.includes('senior') && !cl.includes('assistant');
     }) || findKey(['manager', 'mgr', 'site manager']) || "";
 
-    const monthKwList = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec', '2024', '2025', '2026', '2027'];
-    const isMonthColHeader = (k) => {
-        const cl = k.trim().toLowerCase();
-        return monthKwList.some(m => cl.includes(m));
-    };
-
-    const keyStandaloneBilling = customMapping?.billing || keys.find(k => {
-        if (isMonthColHeader(k)) return false;
+    // Candidate keys for standalone summary columns (in case sheet lacks month columns)
+    const keyStandaloneBilling = getMappedKey('billing') || keys.find(k => {
         const cl = k.trim().toLowerCase();
         if (cl.includes('%') || cl.includes('pct') || cl.includes('share')) return false;
-        return ['total billing', 'billing value', 'billing amount', 'billed amount', 'gross billing'].some(kw => cl.includes(kw));
-    }) || "";
+        return ['total billing', 'billing value', 'billing amount', 'billed amount', 'billed', 'billing', 'revenue', 'site billing', 'bill amt', 'gross billing', 'income', 'sales'].some(kw => cl.includes(kw));
+    }) || findKey(['billing', 'revenue', 'income', 'sales']);
 
-    const keyStandaloneExpense = customMapping?.expense || keys.find(k => {
-        if (isMonthColHeader(k)) return false;
+    const keyStandaloneExpense = getMappedKey('expense') || keys.find(k => {
         const cl = k.trim().toLowerCase();
         if (cl.includes('%') || cl.includes('pct') || cl.includes('share')) return false;
-        return ['total manpower expense', 'total expense', 'manpower expense', 'manpower cost'].some(kw => cl.includes(kw));
-    }) || "";
+        return ['total manpower expense', 'total expense', 'manpower expense', 'manpower cost', 'expense', 'salary', 'manpower', 'wages', 'labor cost', 'direct cost', 'cost'].some(kw => cl.includes(kw));
+    }) || findKey(['expense', 'manpower', 'salary', 'cost']);
 
-    const keyStandaloneCons = customMapping?.consumption || keys.find(k => {
-        if (isMonthColHeader(k)) return false;
+    const keyStandaloneCons = getMappedKey('consumption') || keys.find(k => {
         const cl = k.trim().toLowerCase();
         if (cl.includes('%') || cl.includes('pct') || cl.includes('share') || cl.includes('ratio')) return false;
-        return ['total consumption value', 'total consumption', 'consumption value', 'material consumption'].some(kw => cl.includes(kw));
-    }) || "";
+        return ['total consumption value', 'total consumption', 'consumption value', 'material consumption', 'consumption', 'material cost', 'cons value', 'supplies', 'material', 'replacement value', 'total replacement', 'replacement cost', 'replacement', 'repl value', 'repl cost', 'spares', 'spare parts'].some(kw => cl.includes(kw));
+    }) || findKey(['consumption', 'replacement', 'material', 'supplies', 'spares']);
 
+    // Detect pre-calculated Replacement % or Consumption % columns
     const keySheetReplPct = keys.find(k => {
         const cl = k.trim().toLowerCase();
         return (cl.includes('replacement') || cl.includes('consumption') || cl.includes('material') || cl.includes('repl') || cl.includes('cons')) && (cl.includes('%') || cl.includes('pct') || cl.includes('share') || cl.includes('ratio'));
-    }) || "";    const excludedMonthColKeys = [
-        keySno, keySiteCode, keyRegion, keySiteName, keyCustGroup, keyStatus,
-        keySupervisor, keyAM, keyManager, keySrManager, keySalesModel, keyServiceProvider,
-        keyStandaloneBilling, keyStandaloneExpense, keyStandaloneCons, keySheetReplPct
-    ].filter(k => k && k !== '');
+    }) || "";
 
+    // Detect month columns supporting multiple date & header formats
+    // Auto-detects year from column headers (2026, 2027, etc.)
     const monthsDetected = [];
     const monthPatterns = [
-        { name: 'Jan', keys: ['january', 'jan', '01/', '01-', '/01/', '-01-', '01_', '_01_', '2026-01', '2027-01', 'month 1', 'month-1', 'm01'] },
-        { name: 'Feb', keys: ['february', 'feb', '02/', '02-', '/02/', '-02-', '02_', '_02_', '2026-02', '2027-02', 'month 2', 'month-2', 'm02'] },
-        { name: 'Mar', keys: ['march', 'mar', '03/', '03-', '/03/', '-03-', '03_', '_03_', '2026-03', '2027-03', 'month 3', 'month-3', 'm03'] },
-        { name: 'Apr', keys: ['april', 'apr', '04/', '04-', '/04/', '-04-', '04_', '_04_', '2026-04', '2027-04', 'month 4', 'month-4', 'm04'] },
-        { name: 'May', keys: ['may', '05/', '05-', '/05/', '-05-', '05_', '_05_', '2026-05', '2027-05', 'month 5', 'month-5', 'm05'] },
-        { name: 'Jun', keys: ['june', 'jun', '06/', '06-', '/06/', '-06-', '06_', '_06_', '2026-06', '2027-06', 'month 6', 'month-6', 'm06'] },
-        { name: 'Jul', keys: ['july', 'jul', '07/', '07-', '/07/', '-07-', '07_', '_07_', '2026-07', '2027-07', 'month 7', 'month-7', 'm07'] },
-        { name: 'Aug', keys: ['august', 'aug', '08/', '08-', '/08/', '-08-', '08_', '_08_', '2026-08', '2027-08', 'month 8', 'month-8', 'm08'] },
-        { name: 'Sep', keys: ['september', 'sept', 'sep', '09/', '09-', '/09/', '-09-', '09_', '_09_', '2026-09', '2027-09', 'month 9', 'month-9', 'm09'] },
-        { name: 'Oct', keys: ['october', 'oct', '10/', '10-', '/10/', '-10-', '10_', '_10_', '2026-10', '2027-10', 'month 10', 'month-10', 'm10'] },
-        { name: 'Nov', keys: ['november', 'nov', '11/', '11-', '/11/', '-11-', '11_', '_11_', '2026-11', '2027-11', 'month 11', 'month-11', 'm11'] },
-        { name: 'Dec', keys: ['december', 'dec', '12/', '12-', '/12/', '-12-', '12_', '_12_', '2026-12', '2027-12', 'month 12', 'month-12', 'm12'] }
+        { name: 'Jan', keys: ['jan', 'january', '01/', '01-', '/01/', '-01-', '01_', '_01_', '1/', '1-', '/1/', '-1-', '1_', '_1_', '2026-01', '2027-01', 'month 1', 'month-1', 'm01', 'm1'] },
+        { name: 'Feb', keys: ['feb', 'february', '02/', '02-', '/02/', '-02-', '02_', '_02_', '2/', '2-', '/2/', '-2-', '2_', '_2_', '2026-02', '2027-02', 'month 2', 'month-2', 'm02', 'm2'] },
+        { name: 'Mar', keys: ['mar', 'march', '03/', '03-', '/03/', '-03-', '03_', '_03_', '3/', '3-', '/3/', '-3-', '3_', '_3_', '2026-03', '2027-03', 'month 3', 'month-3', 'm03', 'm3'] },
+        { name: 'Apr', keys: ['apr', 'april', '04/', '04-', '/04/', '-04-', '04_', '_04_', '4/', '4-', '/4/', '-4-', '4_', '_4_', '2026-04', '2027-04', 'month 4', 'month-4', 'm04', 'm4'] },
+        { name: 'May', keys: ['may', '05/', '05-', '/05/', '-05-', '05_', '_05_', '5/', '5-', '/5/', '-5-', '5_', '_5_', '2026-05', '2027-05', 'month 5', 'month-5', 'm05', 'm5'] },
+        { name: 'Jun', keys: ['jun', 'june', '06/', '06-', '/06/', '-06-', '06_', '_06_', '6/', '6-', '/6/', '-6-', '6_', '_6_', '2026-06', '2027-06', 'month 6', 'month-6', 'm06', 'm6'] },
+        { name: 'Jul', keys: ['jul', 'july', '07/', '07-', '/07/', '-07-', '07_', '_07_', '7/', '7-', '/7/', '-7-', '7_', '_7_', '2026-07', '2027-07', 'month 7', 'month-7', 'm07', 'm7'] },
+        { name: 'Aug', keys: ['aug', 'august', '08/', '08-', '/08/', '-08-', '08_', '_08_', '8/', '8-', '/8/', '-8-', '8_', '_8_', '2026-08', '2027-08', 'month 8', 'month-8', 'm08', 'm8'] },
+        { name: 'Sep', keys: ['sep', 'sept', 'september', '09/', '09-', '/09/', '-09-', '09_', '_09_', '9/', '9-', '/9/', '-9-', '9_', '_9_', '2026-09', '2027-09', 'month 9', 'month-9', 'm09', 'm9'] },
+        { name: 'Oct', keys: ['oct', 'october', '10/', '10-', '/10/', '-10-', '10_', '_10_', '2026-10', '2027-10', 'month 10', 'month-10', 'm10'] },
+        { name: 'Nov', keys: ['nov', 'november', '11/', '11-', '/11/', '-11-', '11_', '_11_', '2026-11', '2027-11', 'month 11', 'month-11', 'm11'] },
+        { name: 'Dec', keys: ['dec', 'december', '12/', '12-', '/12/', '-12-', '12_', '_12_', '2026-12', '2027-12', 'month 12', 'month-12', 'm12'] }
     ];
+
+    // Auto-detect years present in column headers (e.g. 2026, 2027)
+    const detectedYears = new Set();
+    keys.forEach(k => {
+        const yearMatch = k.match(/20(\d{2})/);
+        if (yearMatch) detectedYears.add(parseInt('20' + yearMatch[1]));
+    });
+    const sortedYears = Array.from(detectedYears).sort();
+    // Update global month names list based on actually detected months
+    const detectedMonthNames = [];
 
     monthPatterns.forEach(mp => {
         let bCol = "", eCol = "", cCol = "";
         keys.forEach(k => {
             const kLower = k.trim().toLowerCase();
-            if (excludedMonthColKeys.includes(k) || ['remarks', 'notes', 'comment', 'description', 'detail'].some(x => kLower.includes(x))) {
+            // Skip columns containing keywords that could cause false month matching (e.g., "AVG GROSS MARGIN" containing "mar")
+            if (kLower.includes('margin') || kLower.includes('manager') || kLower.includes('manpower') || kLower.includes('summary') || kLower.includes('remarks') || kLower.includes('market') || kLower.includes('average') || kLower.includes('avg')) {
                 return;
             }
-
             const matchesMonth = mp.keys.some(mk => kLower.includes(mk));
             if (matchesMonth) {
-                if (kLower.includes('bill') || kLower.includes('revenue') || kLower.includes('invoic') || kLower.includes('billed')) {
+                if (kLower.includes('bill') || kLower.includes('revenue') || kLower.includes('invoic') || kLower.includes('sales') || kLower.includes('amt') || kLower.includes('amount')) {
                     bCol = k;
-                } else if (kLower.includes('exp') || kLower.includes('manpower') || kLower.includes('salary') || kLower.includes('wage') || kLower.includes('labor')) {
+                } else if (kLower.includes('exp') || kLower.includes('manpower') || kLower.includes('salary') || kLower.includes('wage') || kLower.includes('cost') || kLower.includes('labor')) {
                     eCol = k;
-                } else if (kLower.includes('consum') || kLower.includes('material') || kLower.includes('suppli') || kLower.includes('spare') || kLower.includes('replacement cost') || kLower.includes('replacement value') || kLower.includes('repl cost') || kLower.includes('repl value')) {
+                } else if (kLower.includes('consum') || kLower.includes('value') || kLower.includes('material') || kLower.includes('suppli') || kLower.includes('replace') || kLower.includes('repl') || kLower.includes('spare')) {
                     cCol = k;
                 } else {
-                    const isExactMonthHeader = mp.keys.some(mk => kLower === mk || kLower === mk + ' 2026' || kLower === mk + ' 2025' || kLower === mk + ' 2027');
-                    if (isExactMonthHeader && !bCol) bCol = k;
+                    // Fallback: If header is JUST the month name (e.g. "JULY 2026" or "AUG 26")
+                    if (!bCol) bCol = k;
                 }
             }
         });
@@ -352,18 +336,13 @@ window.normalizeRawData = function(rows, customMapping = null, sheetName = '') {
         if (bCol || eCol || cCol) {
             let yearLabel = '';
             const anyCol = bCol || eCol || cCol;
-            const yearMatch4 = anyCol.match(/20\d{2}/);
-            const yearMatch2 = anyCol.match(/(?:^|[\s/_\-])([2-3]\d)(?:$|[\s/_\-])/);
-            if (yearMatch4) {
-                yearLabel = ' ' + yearMatch4[0];
-            } else if (yearMatch2) {
-                yearLabel = ' 20' + yearMatch2[1];
-            }
+            const yearMatch = anyCol.match(/20\d{2}/);
+            if (yearMatch) yearLabel = ' ' + yearMatch[0];
 
+            const monthKey = mp.name + yearLabel; // e.g. "Jan 2026" or "Jul 2026"
+            detectedMonthNames.push(monthKey);
             monthsDetected.push({
-                name: mp.name,
-                yearLabel: yearLabel,
-                shortName: mp.name,
+                name: monthKey,
                 billingCol: bCol,
                 expenseCol: eCol,
                 consumptionCol: cCol
@@ -371,56 +350,21 @@ window.normalizeRawData = function(rows, customMapping = null, sheetName = '') {
         }
     });
 
-    if (monthsDetected.length === 0 && sheetName) {
-        const sLower = String(sheetName).trim().toLowerCase();
-        monthPatterns.forEach(mp => {
-            const matchesSheet = mp.keys.some(mk => sLower.includes(mk));
-            if (matchesSheet && !monthsDetected.some(m => m.shortName === mp.name)) {
-                let yearLabel = '';
-                const yearMatch4 = sLower.match(/20\d{2}/);
-                const yearMatch2 = sLower.match(/(?:^|[\s/_\-])([2-3]\d)(?:$|[\s/_\-])/);
-                if (yearMatch4) yearLabel = ' ' + yearMatch4[0];
-                else if (yearMatch2) yearLabel = ' 20' + yearMatch2[1];
-
-                monthsDetected.push({
-                    name: mp.name,
-                    yearLabel: yearLabel,
-                    shortName: mp.name,
-                    billingCol: keyStandaloneBilling,
-                    expenseCol: keyStandaloneExpense,
-                    consumptionCol: keyStandaloneCons
-                });
-            }
-        });
-    }
-
-    let detectedDefaultYear = '';
-    for (const m of monthsDetected) {
-        if (m.yearLabel) {
-            detectedDefaultYear = m.yearLabel;
-            break;
-        }
-    }
-    if (!detectedDefaultYear) detectedDefaultYear = ' 2026';
-
-    const detectedMonthNames = [];
-    monthsDetected.forEach(m => {
-        if (!m.yearLabel) m.yearLabel = detectedDefaultYear;
-        m.name = m.shortName + m.yearLabel;
-        detectedMonthNames.push(m.name);
-    });
-
+    // Update global MONTH_NAMES with the actual months found in this file
     if (detectedMonthNames.length > 0) {
         window.MONTH_NAMES = detectedMonthNames;
     }
 
+    // Read precalculated averages candidate keys ONCE outside the loop for speed
     const keyAvgConsumption = findKey(['average monthly consumption', 'avg monthly consumption']);
     const keyAvgBilling     = findKey(['average monthly billing', 'avg monthly billing']);
     const keyAvgManpower    = findKey(['average manpower expense', 'avg manpower expense']);
     const keyAvgMargin      = findKey(['avg gross margin', 'average gross margin', 'gross margin']);
 
+    // Clean and normalize each site row
     const normalizedSites = rows.map((r, idx) => {
         const siteCode = String(r[keySiteCode] || `ST-SITE-${idx + 1}`).trim();
+        // If no siteName column found, fall back to siteCode so we don't show blank
         const siteName = keySiteName ? String(r[keySiteName] || siteCode).trim() : siteCode;
         const region = String(r[keyRegion] || 'UNASSIGNED').trim().toUpperCase();
         const custGroup = String(r[keyCustGroup] || 'General').trim();
@@ -429,8 +373,6 @@ window.normalizeRawData = function(rows, customMapping = null, sheetName = '') {
         const am = String(r[keyAM] || 'N/A').trim();
         const manager = String(r[keyManager] || 'N/A').trim();
         const srManager = String(r[keySrManager] || 'N/A').trim();
-        const salesModel = String(r[keySalesModel] || 'N/A').trim();
-        const serviceProvider = String(r[keyServiceProvider] || 'N/A').trim();
 
         let totalBilling = 0;
         let totalExpense = 0;
@@ -439,12 +381,13 @@ window.normalizeRawData = function(rows, customMapping = null, sheetName = '') {
 
         const monthlyMetrics = {};
 
+        // 1. Process Month-wise Columns
         monthsDetected.forEach(m => {
             const bVal = parseNumber(r[m.billingCol]);
             const eVal = parseNumber(r[m.expenseCol]);
             const cVal = parseNumber(r[m.consumptionCol]);
 
-            const metricObj = {
+            monthlyMetrics[m.name] = {
                 billing: bVal,
                 expense: eVal,
                 consumption: cVal,
@@ -452,27 +395,15 @@ window.normalizeRawData = function(rows, customMapping = null, sheetName = '') {
                 netProfit: bVal - (eVal + cVal)
             };
 
-            monthlyMetrics[m.name] = metricObj;
-            if (m.shortName && !monthlyMetrics[m.shortName]) {
-                monthlyMetrics[m.shortName] = metricObj;
-            }
-
             totalBilling += bVal;
             totalExpense += eVal;
             totalConsumption += cVal;
             if (bVal > 0 || eVal > 0 || cVal > 0) activeMonthCount++;
         });
 
-        if (customMapping && (customMapping.billing || customMapping.expense || customMapping.consumption)) {
-            const bCustom = customMapping.billing ? parseNumber(r[customMapping.billing]) : 0;
-            const eCustom = customMapping.expense ? parseNumber(r[customMapping.expense]) : 0;
-            const cCustom = customMapping.consumption ? parseNumber(r[customMapping.consumption]) : 0;
-            if (bCustom > 0 || eCustom > 0 || cCustom > 0) {
-                totalBilling = bCustom;
-                totalExpense = eCustom;
-                totalConsumption = cCustom;
-            }
-        } else if (totalBilling === 0) {
+        // 2. FALLBACK A: Standalone Summary Column Matcher
+        // If month columns yielded 0 billing, read standalone summary columns!
+        if (totalBilling === 0) {
             const bStandalone = parseNumber(r[keyStandaloneBilling]);
             const eStandalone = parseNumber(r[keyStandaloneExpense]);
             const cStandalone = parseNumber(r[keyStandaloneCons]);
@@ -484,11 +415,14 @@ window.normalizeRawData = function(rows, customMapping = null, sheetName = '') {
             }
         }
 
+        // 2b. If totalConsumption is 0 but an explicit Replacement % / Cons % column exists in the Excel sheet:
         const explicitPct = keySheetReplPct ? parseNumber(r[keySheetReplPct]) : 0;
         if (totalConsumption === 0 && explicitPct > 0 && totalBilling > 0) {
             totalConsumption = Math.round((totalBilling * explicitPct) / 100);
         }
 
+        // 3. FALLBACK B: Universal Numeric Auto-Discovery Safety Net
+        // If totalBilling is STILL 0, inspect non-empty numeric cells (ONLY for real sites)
         if (totalBilling === 0 && totalExpense === 0 && totalConsumption === 0) {
             const hasRealCode = keySiteCode && r[keySiteCode] && String(r[keySiteCode]).trim() !== '';
             const hasRealName = keySiteName && r[keySiteName] && String(r[keySiteName]).trim() !== '';
@@ -516,6 +450,7 @@ window.normalizeRawData = function(rows, customMapping = null, sheetName = '') {
         const sheetAvgExpense     = parseNumber(r[keyAvgManpower]);
         const sheetAvgMargin      = parseNumber(r[keyAvgMargin]);
 
+
         const avgBilling     = sheetAvgBilling > 0 ? sheetAvgBilling : Math.round(totalBilling / mCount);
         const avgExpense     = sheetAvgExpense > 0 ? sheetAvgExpense : Math.round(totalExpense / mCount);
         const avgConsumption = sheetAvgConsumption > 0 ? sheetAvgConsumption : Math.round(totalConsumption / mCount);
@@ -531,8 +466,6 @@ window.normalizeRawData = function(rows, customMapping = null, sheetName = '') {
             siteName,
             region,
             customerGroup: custGroup,
-            salesModel,
-            serviceProvider,
             siteStatus: status,
             supervisor,
             assistantManager: am,

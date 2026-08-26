@@ -1711,6 +1711,10 @@ window.normalizeRawData = function(rows, customMapping = null) {
         let bCol = "", eCol = "", cCol = "";
         keys.forEach(k => {
             const kLower = k.trim().toLowerCase();
+            // Skip columns containing keywords that could cause false month matching (e.g., "AVG GROSS MARGIN" containing "mar")
+            if (kLower.includes('margin') || kLower.includes('manager') || kLower.includes('manpower') || kLower.includes('summary') || kLower.includes('remarks') || kLower.includes('market') || kLower.includes('average') || kLower.includes('avg')) {
+                return;
+            }
             const matchesMonth = mp.keys.some(mk => kLower.includes(mk));
             if (matchesMonth) {
                 if (kLower.includes('bill') || kLower.includes('revenue') || kLower.includes('invoic') || kLower.includes('sales') || kLower.includes('amt') || kLower.includes('amount')) {
@@ -2724,17 +2728,36 @@ window.renderMonthlyTrendsReport = function(sites) {
     const tbody = document.getElementById('tblMonthlyTrendsBody');
     if (!tbody) return;
 
-    // Keys MUST match parser storage — parser uses title-case: 'Jan', 'Feb', etc.
-    const months = [
-        { key: 'Jan', label: 'January 2026' },
-        { key: 'Feb', label: 'February 2026' },
-        { key: 'Mar', label: 'March 2026' },
-        { key: 'Apr', label: 'April 2026' },
-        { key: 'May', label: 'May 2026' },
-        { key: 'Jun', label: 'June 2026' },
-        { key: 'Jul', label: 'July 2026' },
-        { key: 'Aug', label: 'August 2026' }
-    ];
+    // Dynamically discover all month keys present in the loaded dataset
+    const monthsSet = new Set(window.MONTH_NAMES || []);
+    sites.forEach(s => {
+        if (s.monthlyMetrics) {
+            Object.keys(s.monthlyMetrics).forEach(m => monthsSet.add(m));
+        }
+    });
+
+    const longNames = {
+        'Jan': 'January', 'Feb': 'February', 'Mar': 'March', 'Apr': 'April',
+        'May': 'May', 'Jun': 'June', 'Jul': 'July', 'Aug': 'August',
+        'Sep': 'September', 'Oct': 'October', 'Nov': 'November', 'Dec': 'December'
+    };
+
+    const monthOrder = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+    const months = Array.from(monthsSet).sort((a, b) => {
+        const partsA = a.split(' ');
+        const partsB = b.split(' ');
+        const yearA = parseInt(partsA[1]) || 2026;
+        const yearB = parseInt(partsB[1]) || 2026;
+        if (yearA !== yearB) return yearA - yearB;
+        return monthOrder.indexOf(partsA[0]) - monthOrder.indexOf(partsB[0]);
+    }).map(m => {
+        const parts = m.split(' ');
+        const shortName = parts[0];
+        const yearStr = parts[1] ? ' ' + parts[1] : '';
+        const label = (longNames[shortName] || shortName) + yearStr;
+        return { key: m, label: label };
+    });
 
     const monthlyTotals = months.map(({ key, label }) => {
         let billing = 0;
@@ -2767,8 +2790,8 @@ window.renderMonthlyTrendsReport = function(sites) {
         return;
     }
 
-    tbody.innerHTML = monthlyTotals.map(mt => `
-        <tr class="hover:bg-gray-800/40 transition ${mt.billing === 0 && mt.expense === 0 ? 'opacity-30' : ''}">
+    tbody.innerHTML = activeMonths.map(mt => `
+        <tr class="hover:bg-gray-800/40 transition">
             <td class="py-3 px-4 font-bold text-white">${mt.label}</td>
             <td class="py-3 px-4 text-right font-mono font-semibold text-white">${formatRupee(mt.billing)}</td>
             <td class="py-3 px-4 text-right font-mono text-red-400">${formatRupee(mt.expense)}</td>
@@ -2780,7 +2803,7 @@ window.renderMonthlyTrendsReport = function(sites) {
 
     // Trigger Chart update
     if (window.updateMonthlyTrendsChart) {
-        window.updateMonthlyTrendsChart(monthlyTotals);
+        window.updateMonthlyTrendsChart(activeMonths);
     }
 };
 
