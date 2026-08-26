@@ -275,6 +275,25 @@ window.setActiveDataset = function(sites, sourceName = '', shouldCache = true) {
         titleEl.innerText = `${sourceName || 'Uploaded Dataset'} (${sites ? sites.length : 0} Sites)`;
     }
 
+    // Render Diagnostics Card for Column Mapping
+    const diagCard = document.getElementById('diagnosticsCard');
+    const diagContent = document.getElementById('diagnosticsContent');
+    if (diagCard && diagContent && window.DETECTED_MONTH_MAPPINGS && window.DETECTED_MONTH_MAPPINGS.length > 0) {
+        diagContent.innerHTML = window.DETECTED_MONTH_MAPPINGS.map(m => `
+            <div class="py-1 border-b border-gray-800/40 last:border-0 flex flex-wrap gap-2 justify-between">
+                <span class="font-bold text-white">${m.name}</span>
+                <span class="text-gray-400">
+                    Billing: <span class="text-blue-300">"${m.billingCol || '(None)'}"</span> | 
+                    Expense: <span class="text-red-300">"${m.expenseCol || '(None)'}"</span> | 
+                    Consumption: <span class="text-purple-300">"${m.consumptionCol || '(None)'}"</span>
+                </span>
+            </div>
+        `).join('');
+        diagCard.classList.remove('hidden');
+    } else if (diagCard) {
+        diagCard.classList.add('hidden');
+    }
+
 
     // Cache dataset in localStorage for page refresh persistence
     if (shouldCache && sites && sites.length > 0) {

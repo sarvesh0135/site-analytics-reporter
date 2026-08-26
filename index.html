@@ -374,6 +374,16 @@
 
             <!-- TAB 1: EXECUTIVE OVERVIEW -->
             <div id="view-overview" class="tab-view space-y-6">
+                <!-- Column Mapping Diagnostics Card -->
+                <div id="diagnosticsCard" class="hidden glass-panel p-4 rounded-xl border border-blue-500/20 text-xs">
+                    <div class="font-bold text-blue-300 mb-2 flex items-center gap-2">
+                        <i class="fa-solid fa-bug text-blue-400"></i> Column Mapping Diagnostics (Month Detection)
+                    </div>
+                    <div id="diagnosticsContent" class="space-y-1 text-gray-300 font-mono text-[11px]">
+                        <!-- Injected by JS -->
+                    </div>
+                </div>
+
                 <!-- Summary Key Metric Cards -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div class="glass-panel p-5 rounded-xl space-y-2 relative overflow-hidden">
@@ -1750,6 +1760,7 @@ window.normalizeRawData = function(rows, customMapping = null) {
     // Update global MONTH_NAMES with the actual months found in this file
     if (detectedMonthNames.length > 0) {
         window.MONTH_NAMES = detectedMonthNames;
+        window.DETECTED_MONTH_MAPPINGS = monthsDetected;
     }
 
     // Read precalculated averages candidate keys ONCE outside the loop for speed
@@ -4334,6 +4345,25 @@ window.setActiveDataset = function(sites, sourceName = '', shouldCache = true) {
     const titleEl = document.getElementById('datasetTitle');
     if (titleEl) {
         titleEl.innerText = `${sourceName || 'Uploaded Dataset'} (${sites ? sites.length : 0} Sites)`;
+    }
+
+    // Render Diagnostics Card for Column Mapping
+    const diagCard = document.getElementById('diagnosticsCard');
+    const diagContent = document.getElementById('diagnosticsContent');
+    if (diagCard && diagContent && window.DETECTED_MONTH_MAPPINGS && window.DETECTED_MONTH_MAPPINGS.length > 0) {
+        diagContent.innerHTML = window.DETECTED_MONTH_MAPPINGS.map(m => `
+            <div class="py-1 border-b border-gray-800/40 last:border-0 flex flex-wrap gap-2 justify-between">
+                <span class="font-bold text-white">${m.name}</span>
+                <span class="text-gray-400">
+                    Billing: <span class="text-blue-300">"${m.billingCol || '(None)'}"</span> | 
+                    Expense: <span class="text-red-300">"${m.expenseCol || '(None)'}"</span> | 
+                    Consumption: <span class="text-purple-300">"${m.consumptionCol || '(None)'}"</span>
+                </span>
+            </div>
+        `).join('');
+        diagCard.classList.remove('hidden');
+    } else if (diagCard) {
+        diagCard.classList.add('hidden');
     }
 
 

@@ -353,6 +353,7 @@ window.normalizeRawData = function(rows, customMapping = null) {
     // Update global MONTH_NAMES with the actual months found in this file
     if (detectedMonthNames.length > 0) {
         window.MONTH_NAMES = detectedMonthNames;
+        window.DETECTED_MONTH_MAPPINGS = monthsDetected;
     }
 
     // Read precalculated averages candidate keys ONCE outside the loop for speed
