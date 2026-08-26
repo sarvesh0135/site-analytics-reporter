@@ -5,8 +5,8 @@
 
 // Utility for currency formatting (Indian Rupee style)
 window.formatRupee = function(amount) {
-    if (isNaN(amount) || amount === null) return "₹0";
-    return "₹" + Math.round(amount).toLocaleString('en-IN');
+    if (isNaN(amount) || amount === null) return "\u20B90";
+    return "\u20B9" + Math.round(amount).toLocaleString('en-IN');
 };
 
 /**
@@ -620,56 +620,44 @@ window.renderMonthlyTrendsReport = function(sites) {
     const tbody = document.getElementById('tblMonthlyTrendsBody');
     if (!tbody) return;
 
-    const all12Standard = ['Jan 2026', 'Feb 2026', 'Mar 2026', 'Apr 2026', 'May 2026', 'Jun 2026', 'Jul 2026', 'Aug 2026', 'Sep 2026', 'Oct 2026', 'Nov 2026', 'Dec 2026'];
-    const detectedSet = new Set(all12Standard);
-
-    if (window.MONTH_NAMES && window.MONTH_NAMES.length > 0) {
-        window.MONTH_NAMES.forEach(m => detectedSet.add(m));
-    }
-
-    if (sites) {
-        sites.forEach(s => {
-            if (s.monthlyMetrics) {
-                Object.keys(s.monthlyMetrics).forEach(k => {
-                    if (/\d{4}/.test(k)) detectedSet.add(k);
-                });
-            }
-        });
-    }
-
-    const monthOrderMap = { Jan: 1, Feb: 2, Mar: 3, Apr: 4, May: 5, Jun: 6, Jul: 7, Aug: 8, Sep: 9, Oct: 10, Nov: 11, Dec: 12 };
-    const monthKeys = Array.from(detectedSet).sort((a, b) => {
-        const aShort = a.split(' ')[0];
-        const bShort = b.split(' ')[0];
-        const aYear = a.match(/20\d{2}/) ? parseInt(a.match(/20\d{2}/)[0]) : 2026;
-        const bYear = b.match(/20\d{2}/) ? parseInt(b.match(/20\d{2}/)[0]) : 2026;
-        if (aYear !== bYear) return aYear - bYear;
-        return (monthOrderMap[aShort] || 99) - (monthOrderMap[bShort] || 99);
+    // Dynamically discover all month keys present in the loaded dataset
+    const monthsSet = new Set(window.MONTH_NAMES || []);
+    sites.forEach(s => {
+        if (s.monthlyMetrics) {
+            Object.keys(s.monthlyMetrics).forEach(m => monthsSet.add(m));
+        }
     });
 
-    const monthFullMap = {
-        Jan: 'January', Feb: 'February', Mar: 'March', Apr: 'April',
-        May: 'May', Jun: 'June', Jul: 'July', Aug: 'August',
-        Sep: 'September', Oct: 'October', Nov: 'November', Dec: 'December'
+    const longNames = {
+        'Jan': 'January', 'Feb': 'February', 'Mar': 'March', 'Apr': 'April',
+        'May': 'May', 'Jun': 'June', 'Jul': 'July', 'Aug': 'August',
+        'Sep': 'September', 'Oct': 'October', 'Nov': 'November', 'Dec': 'December'
     };
 
-    const monthlyTotals = monthKeys.map(mKey => {
+    const monthOrder = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+    const months = Array.from(monthsSet).sort((a, b) => {
+        const partsA = a.split(' ');
+        const partsB = b.split(' ');
+        const yearA = parseInt(partsA[1]) || 2026;
+        const yearB = parseInt(partsB[1]) || 2026;
+        if (yearA !== yearB) return yearA - yearB;
+        return monthOrder.indexOf(partsA[0]) - monthOrder.indexOf(partsB[0]);
+    }).map(m => {
+        const parts = m.split(' ');
+        const shortName = parts[0];
+        const yearStr = parts[1] ? ' ' + parts[1] : '';
+        const label = (longNames[shortName] || shortName) + yearStr;
+        return { key: m, label: label };
+    });
+
+    const monthlyTotals = months.map(({ key, label }) => {
         let billing = 0;
         let expense = 0;
         let consumption = 0;
 
-        const parts = mKey.split(' ');
-        const shortMonth = parts[0];
-        const yearPart = parts[1] || '';
-        const fullMonthName = (monthFullMap[shortMonth] || shortMonth) + (yearPart ? ' ' + yearPart : '');
-
         sites.forEach(s => {
-            if (!s.monthlyMetrics) return;
-            let mData = s.monthlyMetrics[mKey];
-            if (!mData) {
-                const foundKey = Object.keys(s.monthlyMetrics).find(k => k.split(' ')[0].toLowerCase() === shortMonth.toLowerCase());
-                if (foundKey) mData = s.monthlyMetrics[foundKey];
-            }
+            const mData = s.monthlyMetrics ? s.monthlyMetrics[key] : null;
             if (mData) {
                 billing     += mData.billing     || 0;
                 expense     += mData.expense     || 0;
@@ -680,10 +668,21 @@ window.renderMonthlyTrendsReport = function(sites) {
         const profit = billing - (expense + consumption);
         const margin = billing > 0 ? Number(((profit / billing) * 100).toFixed(2)) : 0;
 
-        return { key: mKey, month: shortMonth, label: fullMonthName, billing, expense, consumption, profit, margin };
+        return { key, label, billing, expense, consumption, profit, margin };
     });
 
-    tbody.innerHTML = monthlyTotals.map(mt => `
+    // Only render months that have at least some data
+    const activeMonths = monthlyTotals.filter(mt => mt.billing > 0 || mt.expense > 0 || mt.consumption > 0);
+
+    if (activeMonths.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-gray-500 italic">
+            <i class="fa-solid fa-circle-info mr-2 text-gray-600"></i>
+            No monthly data found. Make sure your file has month-specific billing/expense/consumption columns.
+        </td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = activeMonths.map(mt => `
         <tr class="hover:bg-gray-800/40 transition">
             <td class="py-3 px-4 font-bold text-white">${mt.label}</td>
             <td class="py-3 px-4 text-right font-mono font-semibold text-white">${formatRupee(mt.billing)}</td>
@@ -694,8 +693,9 @@ window.renderMonthlyTrendsReport = function(sites) {
         </tr>
     `).join('');
 
+    // Trigger Chart update
     if (window.updateMonthlyTrendsChart) {
-        window.updateMonthlyTrendsChart(monthlyTotals);
+        window.updateMonthlyTrendsChart(activeMonths);
     }
 };
 
@@ -916,33 +916,25 @@ window.openSiteDetailModal = function(siteCode) {
                     <tbody class="divide-y divide-gray-800/40 text-gray-300">
     `;
 
-    const monthFull = { Jan:'January', Feb:'February', Mar:'March', Apr:'April', May:'May', Jun:'June', Jul:'July', Aug:'August', Sep:'September', Oct:'October', Nov:'November', Dec:'December' };
-    const all12Months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug'];
+    const monthFull = { Jan:'January', Feb:'February', Mar:'March', Apr:'April', May:'May', Jun:'June', Jul:'July', Aug:'August' };
 
-    all12Months.forEach(shortM => {
-        let m = null;
-        if (site.monthlyMetrics) {
-            const foundKey = Object.keys(site.monthlyMetrics).find(k => k === shortM || k.startsWith(shortM + ' ') || k.toLowerCase().startsWith(shortM.toLowerCase()));
-            if (foundKey) m = site.monthlyMetrics[foundKey];
+    months.forEach(mKey => {
+        const m = site.monthlyMetrics ? site.monthlyMetrics[mKey] : null;
+        if (m && (m.billing > 0 || m.expense > 0 || m.consumption > 0)) {
+            const mProfit = m.billing - (m.expense + m.consumption);
+            const mMargin = m.billing > 0 ? ((mProfit / m.billing) * 100).toFixed(2) : '0.00';
+            html += `
+                <tr class="hover:bg-gray-900/60 transition">
+                    <td class="py-2 px-3 font-sans font-bold text-white">${monthFull[mKey]}</td>
+                    <td class="py-2 px-3 text-right">${formatRupee(m.billing)}</td>
+                    <td class="py-2 px-3 text-right text-red-400">${formatRupee(m.expense)}</td>
+                    <td class="py-2 px-3 text-right text-purple-400">${formatRupee(m.consumption)}</td>
+                    <td class="py-2 px-3 text-right font-bold ${mProfit >= 0 ? 'text-emerald-400' : 'text-red-400'}">${formatRupee(mProfit)}</td>
+                    <td class="py-2 px-3 text-right font-bold ${parseFloat(mMargin) >= 15 ? 'text-emerald-400' : 'text-amber-400'}">${mMargin}%</td>
+                </tr>
+            `;
         }
-
-        const bVal = m ? (m.billing || 0) : 0;
-        const eVal = m ? (m.expense || 0) : 0;
-        const cVal = m ? (m.consumption || 0) : 0;
-        const mProfit = bVal - (eVal + cVal);
-        const mMargin = bVal > 0 ? ((mProfit / bVal) * 100).toFixed(2) : '0.00';
-        const displayLabel = monthFull[shortM] || shortM;
-
-        html += `
-            <tr class="hover:bg-gray-900/60 transition">
-                <td class="py-2 px-3 font-sans font-bold text-white">${displayLabel}</td>
-                <td class="py-2 px-3 text-right">${formatRupee(bVal)}</td>
-                <td class="py-2 px-3 text-right text-red-400">${formatRupee(eVal)}</td>
-                <td class="py-2 px-3 text-right text-purple-400">${formatRupee(cVal)}</td>
-                <td class="py-2 px-3 text-right font-bold ${mProfit >= 0 ? 'text-emerald-400' : 'text-red-400'}">${formatRupee(mProfit)}</td>
-                <td class="py-2 px-3 text-right font-bold ${parseFloat(mMargin) >= 15 ? 'text-emerald-400' : 'text-amber-400'}">${mMargin}%</td>
-            </tr>
-        `;
     });
 
     html += `
