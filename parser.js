@@ -102,9 +102,18 @@ window.parseExcelFile = function(file, callback) {
                         }
                         let parentH = currentParent || lastParentH;
 
-                        // Ignore parent headers that are formatted as full Date strings (e.g. Sat Feb 28 2026 23:59:50 GMT+0530)
-                        const isFullDateString = parentH.includes('GMT') || parentH.includes('Time') || parentH.includes('Standard') || /^[A-Za-z]{3}\s+[A-Za-z]{3}\s+\d+/.test(parentH);
-                        if (parentH && isFullDateString) {
+                        // Ignore parent headers that represent dates (e.g. standard dates, ISO, or full JS date strings)
+                        const isDateLike = (str) => {
+                            if (!str) return false;
+                            const lower = str.toLowerCase();
+                            if (lower.includes('gmt') || lower.includes('time') || lower.includes('standard')) return true;
+                            if (/^[A-Za-z]{3}\s+[A-Za-z]{3}\s+\d+/.test(str)) return true;
+                            if (/^\d{4}[-\/]\d{2}[-\/]\d{2}/.test(str)) return true;
+                            if (/^\d{2}[-\/]\d{2}[-\/]\d{4}/.test(str)) return true;
+                            return false;
+                        };
+
+                        if (parentH && isDateLike(parentH)) {
                             parentH = '';
                         }
 
