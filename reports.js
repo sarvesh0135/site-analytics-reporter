@@ -755,6 +755,7 @@ window.openSiteDetailModal = function(siteCode) {
         return;
     }
 
+    const selMonth = window.selectedMonth || 'ALL';
     const mName = selMonth !== 'ALL' 
         ? `Month: ${selMonth}${/20\d{2}/.test(selMonth) ? '' : ' 2026'}` 
         : 'Jan–Aug 2026 (Aggregated)';

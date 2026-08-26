@@ -102,7 +102,7 @@ window.parseExcelFile = function(file, callback) {
                         }
                         let parentH = currentParent || lastParentH;
 
-                        // Ignore parent headers that represent dates (e.g. standard dates, ISO, or full JS date strings)
+                        // Ignore parent headers that represent dates (e.g. standard dates, ISO, short dates, or full JS date strings)
                         const isDateLike = (str) => {
                             if (!str) return false;
                             const lower = str.toLowerCase();
@@ -110,6 +110,8 @@ window.parseExcelFile = function(file, callback) {
                             if (/^[A-Za-z]{3}\s+[A-Za-z]{3}\s+\d+/.test(str)) return true;
                             if (/^\d{4}[-\/]\d{2}[-\/]\d{2}/.test(str)) return true;
                             if (/^\d{2}[-\/]\d{2}[-\/]\d{4}/.test(str)) return true;
+                            // Match short dates like "Jan-26", "Sep-26", "Jan 26", "Jan 2026", "January 2026"
+                            if (/^[A-Za-z]{3,9}[-\/\s]\d{2,4}$/i.test(str.trim())) return true;
                             return false;
                         };
 
