@@ -352,14 +352,19 @@ function populateFilterDropdowns(sites) {
     const regions = new Set();
     const statuses = new Set();
     const srManagers = new Set();
-    const monthsSet = new Set(window.MONTH_NAMES || []);
+    const monthsSet = new Set();
 
     sites.forEach(s => {
         if (s.region) regions.add(s.region);
         if (s.siteStatus) statuses.add(s.siteStatus);
         if (s.srManager) srManagers.add(s.srManager);
         if (s.monthlyMetrics) {
-            Object.keys(s.monthlyMetrics).forEach(m => monthsSet.add(m));
+            Object.keys(s.monthlyMetrics).forEach(m => {
+                const metric = s.monthlyMetrics[m];
+                if (metric && ((metric.billing || 0) > 0 || (metric.expense || 0) > 0 || (metric.consumption || 0) > 0)) {
+                    monthsSet.add(m);
+                }
+            });
         }
     });
 
@@ -374,7 +379,34 @@ function populateFilterDropdowns(sites) {
 
     // Dynamically populate month filter from detected months in the uploaded file
     if (selMonth) {
-        const sortedMonths = Array.from(monthsSet);
+        const monthOrderList = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const cleanMonthNameLocal = (mStr) => {
+            if (!mStr || typeof mStr !== 'string') return "";
+            const clean = mStr.trim().toLowerCase();
+            if (clean.startsWith('jan')) return 'Jan';
+            if (clean.startsWith('feb')) return 'Feb';
+            if (clean.startsWith('mar')) return 'Mar';
+            if (clean.startsWith('apr')) return 'Apr';
+            if (clean.startsWith('may')) return 'May';
+            if (clean.startsWith('jun')) return 'Jun';
+            if (clean.startsWith('jul')) return 'Jul';
+            if (clean.startsWith('aug')) return 'Aug';
+            if (clean.startsWith('sep')) return 'Sep';
+            if (clean.startsWith('oct')) return 'Oct';
+            if (clean.startsWith('nov')) return 'Nov';
+            if (clean.startsWith('dec')) return 'Dec';
+            return mStr;
+        };
+
+        const sortedMonths = Array.from(monthsSet).filter(Boolean).sort((a, b) => {
+            const partsA = String(a).split(' ');
+            const partsB = String(b).split(' ');
+            const yearA = parseInt(partsA[1]) || 2026;
+            const yearB = parseInt(partsB[1]) || 2026;
+            if (yearA !== yearB) return yearA - yearB;
+            return monthOrderList.indexOf(cleanMonthNameLocal(partsA[0])) - monthOrderList.indexOf(cleanMonthNameLocal(partsB[0]));
+        });
+
         if (sortedMonths.length > 0) {
             selMonth.innerHTML = '<option value="ALL">All Months (Total/Avg)</option>' +
                 sortedMonths.map(m => `<option value="${m}">${m}</option>`).join('');

@@ -929,7 +929,7 @@ window.openSiteDetailModal = function(siteCode) {
         <div class="space-y-2">
             <h4 class="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center gap-2">
                 <i class="fa-solid fa-calendar-days text-amber-400"></i>
-                Month-by-Month Performance History (Jan–Aug 2026)
+                Month-by-Month Performance History
             </h4>
             <div class="overflow-x-auto rounded-xl border border-gray-800">
                 <table class="w-full text-left text-xs font-mono">
@@ -946,17 +946,55 @@ window.openSiteDetailModal = function(siteCode) {
                     <tbody class="divide-y divide-gray-800/40 text-gray-300">
     `;
 
-    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug'];
-    const monthFull = { Jan:'January', Feb:'February', Mar:'March', Apr:'April', May:'May', Jun:'June', Jul:'July', Aug:'August' };
+    const mKeys = site.monthlyMetrics ? Object.keys(site.monthlyMetrics) : [];
+    const monthOrderList = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    
+    const cleanMonthNameLocal = (mStr) => {
+        if (!mStr || typeof mStr !== 'string') return "";
+        const clean = mStr.trim().toLowerCase();
+        if (clean.startsWith('jan')) return 'Jan';
+        if (clean.startsWith('feb')) return 'Feb';
+        if (clean.startsWith('mar')) return 'Mar';
+        if (clean.startsWith('apr')) return 'Apr';
+        if (clean.startsWith('may')) return 'May';
+        if (clean.startsWith('jun')) return 'Jun';
+        if (clean.startsWith('jul')) return 'Jul';
+        if (clean.startsWith('aug')) return 'Aug';
+        if (clean.startsWith('sep')) return 'Sep';
+        if (clean.startsWith('oct')) return 'Oct';
+        if (clean.startsWith('nov')) return 'Nov';
+        if (clean.startsWith('dec')) return 'Dec';
+        return mStr;
+    };
 
-    months.forEach(mKey => {
-        const m = site.monthlyMetrics ? site.monthlyMetrics[mKey] : null;
+    const sortedMKeys = mKeys.filter(Boolean).sort((a, b) => {
+        const partsA = String(a).split(' ');
+        const partsB = String(b).split(' ');
+        const yearA = parseInt(partsA[1]) || 2026;
+        const yearB = parseInt(partsB[1]) || 2026;
+        if (yearA !== yearB) return yearA - yearB;
+        return monthOrderList.indexOf(cleanMonthNameLocal(partsA[0])) - monthOrderList.indexOf(cleanMonthNameLocal(partsB[0]));
+    });
+
+    const monthFull = { 
+        Jan:'January', Feb:'February', Mar:'March', Apr:'April', May:'May', Jun:'June', 
+        Jul:'July', Aug:'August', Sep:'September', Oct:'October', Nov:'November', Dec:'December' 
+    };
+
+    sortedMKeys.forEach(mKey => {
+        const m = site.monthlyMetrics[mKey];
         if (m && (m.billing > 0 || m.expense > 0 || m.consumption > 0)) {
             const mProfit = m.billing - (m.expense + m.consumption);
             const mMargin = m.billing > 0 ? ((mProfit / m.billing) * 100).toFixed(2) : '0.00';
+            
+            const parts = mKey.split(' ');
+            const shortName = cleanMonthNameLocal(parts[0]);
+            const yearStr = parts[1] ? ' ' + parts[1] : '';
+            const longLabel = (monthFull[shortName] || shortName) + yearStr;
+
             html += `
                 <tr class="hover:bg-gray-900/60 transition">
-                    <td class="py-2 px-3 font-sans font-bold text-white">${monthFull[mKey]}</td>
+                    <td class="py-2 px-3 font-sans font-bold text-white">${longLabel}</td>
                     <td class="py-2 px-3 text-right">${formatRupee(m.billing)}</td>
                     <td class="py-2 px-3 text-right text-red-400">${formatRupee(m.expense)}</td>
                     <td class="py-2 px-3 text-right text-purple-400">${formatRupee(m.consumption)}</td>
