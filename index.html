@@ -253,10 +253,6 @@
                         <i class="fa-solid fa-bolt text-amber-400"></i>
                         <span>Explore Demo Sample Data</span>
                     </button>
-                    <button onclick="localStorage.clear(); location.reload();" class="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-red-950/60 hover:bg-red-900 text-red-300 text-xs font-semibold border border-red-800/60 transition inline-flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-rotate-right"></i>
-                        <span>Clear Cache & Force Reload</span>
-                    </button>
                 </div>
 
                 <div class="mt-6 pt-4 border-t border-gray-800 text-left">
@@ -271,7 +267,7 @@
                         <span class="px-2 py-0.5 rounded bg-gray-800/80 border border-gray-700/50">ASSISTANT MANAGER</span>
                         <span class="px-2 py-0.5 rounded bg-gray-800/80 border border-gray-700/50">MANAGER</span>
                         <span class="px-2 py-0.5 rounded bg-gray-800/80 border border-gray-700/50">SR MANAGER</span>
-                        <span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 font-semibold">ALL MONTHS (Jan–Dec) Billing, Expense & Consumption Value</span>
+                        <span class="px-2 py-0.5 rounded bg-brand-500/10 text-brand-300 border border-brand-500/20">JAN-JUL/AUG 2026 BILLING, EXPENSE & Consumption Value</span>
                     </div>
                 </div>
             </div>
@@ -286,10 +282,7 @@
                 <div class="glass-panel rounded-xl p-4 flex flex-wrap items-center justify-between gap-4 border-l-4 border-l-brand-500 shadow-md">
                     <div class="flex items-center space-x-4">
                         <div>
-                            <div class="flex items-center gap-2">
-                                <span class="text-xs uppercase tracking-wider text-gray-400 font-semibold">Active Dataset</span>
-                                <span class="px-2 py-0.5 text-[10px] rounded font-mono font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">v3.5 ACTIVE</span>
-                            </div>
+                            <span class="text-xs uppercase tracking-wider text-gray-400 font-semibold">Active Dataset</span>
                             <h2 id="datasetTitle" class="text-base font-bold text-white">Sample Dataset (Jan - July 2026)</h2>
                         </div>
                         <div class="h-8 w-px bg-gray-800"></div>
@@ -385,7 +378,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div class="glass-panel p-5 rounded-xl space-y-2 relative overflow-hidden">
                         <div class="absolute -right-4 -bottom-4 text-brand-500/10 text-7xl"><i class="fa-solid fa-indian-rupee-sign"></i></div>
-                        <span id="kpiTotalBillingLabel" class="text-xs uppercase tracking-wider text-gray-400 font-semibold">Total Billing</span>
+                        <span class="text-xs uppercase tracking-wider text-gray-400 font-semibold">Total Billing (Jan-Jul)</span>
                         <h3 id="kpiTotalBilling" class="text-2xl font-extrabold text-white">â‚¹0</h3>
                         <p class="text-xs text-gray-400 flex items-center gap-1">
                             Avg monthly: <span id="kpiAvgBilling" class="font-semibold text-gray-200">â‚¹0</span>
@@ -803,8 +796,6 @@
                                     <th class="py-3 px-3 bg-gray-950">Region</th>
                                     <th class="py-3 px-3 bg-gray-950">Site Name</th>
                                     <th class="py-3 px-3 bg-gray-950">Customer Group</th>
-                                    <th class="py-3 px-3 bg-gray-950">Sales Model</th>
-                                    <th class="py-3 px-3 bg-gray-950">Service Provider</th>
                                     <th class="py-3 px-3 bg-gray-950">Site Status</th>
                                     <th class="py-3 px-3">Supervisor</th>
                                     <th class="py-3 px-3">Assistant Manager</th>
@@ -1198,6 +1189,37 @@
     </div>
 
     <!-- ═══════════════════════════════════════════════════════════
+         SHEET SELECTION MODAL — Shown when uploaded file has multiple tabs
+         ═══════════════════════════════════════════════════════════ -->
+    <div id="sheetSelectionModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+        <div class="glass-panel rounded-2xl w-full max-w-md border border-brand-500/30 shadow-2xl shadow-brand-900/30 max-h-[85vh] flex flex-col">
+            <div class="px-6 py-4 border-b border-gray-800 flex items-center justify-between bg-gray-900/95 rounded-t-2xl">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-lg bg-brand-500/20 border border-brand-500/30 flex items-center justify-center text-brand-400">
+                        <i class="fa-solid fa-table-list"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-white">Select Excel Worksheet</h3>
+                        <p class="text-xs text-gray-400">Multiple worksheets detected. Choose one to analyze.</p>
+                    </div>
+                </div>
+                <button onclick="closeSheetSelectionModal()" class="text-gray-500 hover:text-white text-xl"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div class="p-6 overflow-y-auto flex-1 space-y-2" id="sheetSelectionList">
+                <!-- Worksheet buttons dynamically injected here -->
+            </div>
+
+            <div class="px-6 py-4 border-t border-gray-800 bg-gray-900/40 rounded-b-2xl flex justify-between items-center text-xs">
+                <button onclick="closeSheetSelectionModal()" class="px-4 py-2 font-semibold rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-700 transition">Cancel</button>
+                <button onclick="combineAllSheetsSelected()" class="px-4 py-2 font-bold rounded-xl bg-brand-600 hover:bg-brand-500 text-white transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-object-group"></i> Combine All Sheets
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
          COLUMN MAPPING MODAL — Shown for unrecognized Excel formats
          ═══════════════════════════════════════════════════════════ -->
     <div id="columnMappingModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
@@ -1234,8 +1256,6 @@
                         <div class="space-y-2">
                             <div class="flex items-center gap-2"><label class="text-gray-400 w-32 flex-shrink-0">Site Code:</label><select id="mapSiteCode" class="flex-1 bg-gray-800 text-gray-200 border border-gray-700 rounded px-2 py-1 text-xs focus:outline-none focus:border-brand-500"></select></div>
                             <div class="flex items-center gap-2"><label class="text-gray-400 w-32 flex-shrink-0">Site Name:</label><select id="mapSiteName" class="flex-1 bg-gray-800 text-gray-200 border border-gray-700 rounded px-2 py-1 text-xs focus:outline-none focus:border-brand-500"></select></div>
-                            <div class="flex items-center gap-2"><label class="text-gray-400 w-32 flex-shrink-0">Sales Model:</label><select id="mapSalesModel" class="flex-1 bg-gray-800 text-gray-200 border border-gray-700 rounded px-2 py-1 text-xs focus:outline-none focus:border-brand-500"></select></div>
-                            <div class="flex items-center gap-2"><label class="text-gray-400 w-32 flex-shrink-0">Service Provider:</label><select id="mapServiceProvider" class="flex-1 bg-gray-800 text-gray-200 border border-gray-700 rounded px-2 py-1 text-xs focus:outline-none focus:border-brand-500"></select></div>
                             <div class="flex items-center gap-2"><label class="text-gray-400 w-32 flex-shrink-0">Region:</label><select id="mapRegion" class="flex-1 bg-gray-800 text-gray-200 border border-gray-700 rounded px-2 py-1 text-xs focus:outline-none focus:border-brand-500"></select></div>
                             <div class="flex items-center gap-2"><label class="text-gray-400 w-32 flex-shrink-0">Customer Group:</label><select id="mapCustGroup" class="flex-1 bg-gray-800 text-gray-200 border border-gray-700 rounded px-2 py-1 text-xs focus:outline-none focus:border-brand-500"></select></div>
                             <div class="flex items-center gap-2"><label class="text-gray-400 w-32 flex-shrink-0">Site Status:</label><select id="mapStatus" class="flex-1 bg-gray-800 text-gray-200 border border-gray-700 rounded px-2 py-1 text-xs focus:outline-none focus:border-brand-500"></select></div>
@@ -1290,9 +1310,6 @@ window.generateSampleDataset = function() {
     const assistantManagers = ['Amit Roy', 'Kavita Reddy', 'Nikhil Nair', 'Suresh Das', 'Neha Kapoor'];
     const supervisors = ['Ramesh Babu', 'Ganesh Chary', 'Srinivas K.', 'Mahesh Y.', 'Dharmendra P.', 'Kalyan M.'];
 
-    const salesModels = ['Fixed Rate', 'Manpower + Material', 'Unit Rate', 'SLA Based'];
-    const serviceProviders = ['Apex Facility Services', 'ProTouch Managed Services', 'Standard Operations Solutions', 'Integrated FM Pvt Ltd'];
-
     const sites = [];
     let sno = 1;
 
@@ -1303,8 +1320,6 @@ window.generateSampleDataset = function() {
             const siteName = `${region} Site Alpha-${i} (${customerGroups[i % customerGroups.length]})`;
             const custGroup = customerGroups[i % customerGroups.length];
             const status = siteStatuses[i % siteStatuses.length];
-            const salesModel = salesModels[i % salesModels.length];
-            const serviceProvider = serviceProviders[i % serviceProviders.length];
 
             const srMgr = srManagers[i % srManagers.length];
             const mgr = managers[i % managers.length];
@@ -1327,9 +1342,7 @@ window.generateSampleDataset = function() {
             const siteRow = {
                 "S.no": sno++,
                 "Site code": siteCode,
-                "Sales Model": salesModel,
                 "Region": region,
-                "Service Provider": serviceProvider,
                 "Site name": siteName,
                 "Customer Group": custGroup,
                 "Site Status": status,
@@ -1395,8 +1408,7 @@ if (typeof window.formatRupee !== 'function') {
     };
 }
 
-// MONTH_NAMES is dynamically set by normalizeRawData() after parsing the uploaded file
-window.MONTH_NAMES = [];
+window.MONTH_NAMES = ['JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE', 'JULY', 'AUGUST'];
 
 window.parseExcelFile = function(file, callback) {
     if (typeof XLSX === 'undefined') {
@@ -1478,30 +1490,16 @@ window.parseExcelFile = function(file, callback) {
                     const prevRow = headerRowIdx > 0 ? allRows[headerRowIdx - 1] : null;
                     const colIndexMap = {};
 
-                    const isSummaryOrMetaHeader = (str) => {
-                        if (!str) return false;
-                        const cl = String(str).toLowerCase().trim();
-                        return ['site', 'code', 'sno', 'sl', 'region', 'status', 'manager', 'total', 'avg', 'average', 'summary', 'model', 'provider', 'group', 'remarks', 'note', 'stand alone', 'standalone'].some(kw => cl.includes(kw));
-                    };
-
                     let lastParentH = '';
                     rawHeaders.forEach((h, colIdx) => {
                         let hClean = String(h || '').trim();
                         let currentParent = prevRow && prevRow[colIdx] ? String(prevRow[colIdx]).trim() : '';
-
-                        if (currentParent && currentParent !== '__EMPTY' && !isSummaryOrMetaHeader(currentParent)) {
+                        if (currentParent && currentParent !== '__EMPTY' && !currentParent.toLowerCase().includes('site') && !currentParent.toLowerCase().includes('sno') && !currentParent.toLowerCase().includes('code')) {
                             lastParentH = currentParent;
-                        } else if (currentParent && isSummaryOrMetaHeader(currentParent)) {
-                            lastParentH = '';
                         }
-
-                        if (isSummaryOrMetaHeader(hClean)) {
-                            lastParentH = '';
-                        }
-
                         let parentH = currentParent || lastParentH;
 
-                        if (parentH && parentH !== hClean && !isSummaryOrMetaHeader(parentH)) {
+                        if (parentH && parentH !== hClean && !parentH.toLowerCase().includes('site') && !parentH.toLowerCase().includes('sno') && !parentH.toLowerCase().includes('code')) {
                             if (hClean && hClean !== '__EMPTY') {
                                 hClean = `${parentH}_${hClean}`;
                             } else if (parentH) {
@@ -1533,9 +1531,9 @@ window.parseExcelFile = function(file, callback) {
                         return obj;
                     });
 
-                    const processed = window.normalizeRawData(rawJson, null, name);
+                    const processed = window.normalizeRawData(rawJson);
                     if (processed.length > 0) {
-                        sheetResults.push({ processed, sheetName: name, count: processed.length, rawJson });
+                        sheetResults.push({ processed, sheetName: name, count: processed.length, rawJson: rawJson });
                     }
                 } catch (sErr) {
                     console.warn(`[Parser] Error reading sheet '${name}':`, sErr);
@@ -1549,27 +1547,19 @@ window.parseExcelFile = function(file, callback) {
                 return;
             }
 
+            // Save global workbook references for user callbacks from UI
+            window.pendingSheetResults = sheetResults;
+            window.pendingFileName = file.name;
+            window.pendingParserCallback = callback;
+
+            // Route 1: Single worksheet - load directly
             if (sheetResults.length === 1) {
-                const sr = sheetResults[0];
-                sr.processed.forEach((s, idx) => { s.id = idx + 1; s.sno = idx + 1; });
-                callback(sr.processed, `${file.name} [${sr.sheetName}] (${sr.count} Sites)`);
-            } else {
-                // Multi-Tab Workbook: Open interactive sheet selector modal!
-                window.showSheetSelectionModal(sheetResults, file, callback);
+                window.loadSelectedWorksheet(0);
+                return;
             }
 
-            // Re-index site IDs
-            finalSites.forEach((s, idx) => {
-                s.id = idx + 1;
-                s.sno = idx + 1;
-            });
-
-            // Store raw rows for Column Mapping UI re-adjustment
-            window.currentRawRows = masterSheet ? masterSheet.rawJson : sheetResults[0].rawJson;
-            window.currentRawFileName = loadedSourceName;
-
-            console.log(`[Parser] Successfully loaded ${finalSites.length} sites from file '${file.name}'`);
-            callback(finalSites, loadedSourceName);
+            // Route 2: Multiple worksheets - trigger the interactive Sheet Selection Modal
+            window.showSheetSelectionModal(sheetResults, file.name);
 
 
 
@@ -1587,7 +1577,7 @@ window.parseExcelFile = function(file, callback) {
 
 
 
-window.normalizeRawData = function(rows, customMapping = null, sheetName = '') {
+window.normalizeRawData = function(rows, customMapping = null) {
     if (!rows || rows.length === 0) return [];
 
     // Extract headers from first row keys
@@ -1601,6 +1591,13 @@ window.normalizeRawData = function(rows, customMapping = null, sheetName = '') {
             if (saved) customMapping = JSON.parse(saved);
         } catch (e) {}
     }
+
+    // Helper to validate that a custom mapped key actually exists in the current sheet's keys
+    const getMappedKey = (field) => {
+        const val = customMapping?.[field];
+        if (val && keys.includes(val)) return val;
+        return null;
+    };
 
     // Ultra-flexible key finders with exhaustive candidate variations
     const findKey = (candidates, exclude = []) => {
@@ -1625,68 +1622,56 @@ window.normalizeRawData = function(rows, customMapping = null, sheetName = '') {
         }) || "";
     };
 
-    const keySno        = customMapping?.sno || findKey(['s.no', 'sno', 'sl no', 'sr no', 's. no', 'serial', 'sl.no', 's_no', 'index', '#']);
-    const keySiteCode   = customMapping?.siteCode || findKey(['site code', 'siteid', 'site_code', 'site id', 'site_id', 'site no', 'unit code', 'branch code', 'location code', 'site number', 'unit no', 'code']);
-    const keyRegion     = customMapping?.region || findKey(['region', 'zone', 'state', 'circle', 'area', 'reg', 'territory', 'city']);
+    const keySno        = getMappedKey('sno') || findKey(['s.no', 'sno', 'sl no', 'sr no', 's. no', 'serial', 'sl.no', 's_no', 'index', '#']);
+    const keySiteCode   = getMappedKey('siteCode') || findKey(['site code', 'siteid', 'site_code', 'site id', 'site_id', 'site no', 'unit code', 'branch code', 'location code', 'site number', 'unit no', 'code']);
+    const keyRegion     = getMappedKey('region') || findKey(['region', 'zone', 'state', 'circle', 'area', 'reg', 'territory', 'city']);
     
-    const keySiteName = customMapping?.siteName || findKeyExact(
+    const keySiteName = getMappedKey('siteName') || findKeyExact(
         ['site name', 'sitename', 'site_name', 'unit name', 'branch name', 'location name',
          'property name', 'facility name', 'client name', 'account name', 'project name', 'building name',
          'site', 'name', 'unit', 'location', 'property', 'facility', 'building', 'project', 'client', 'account'],
         [keySiteCode]
     );
 
-    const keyCustGroup  = customMapping?.custGroup || findKey(['customer group', 'customergroup', 'customer_group', 'client group', 'client', 'customer', 'account']);
-    const keyStatus     = customMapping?.status || findKey(['site status', 'sitestatus', 'status', 'active status']);
-    const keySupervisor = customMapping?.supervisor || findKey(['supervisor', 'super visor', 'field supervisor']);
-
-    const keySalesModel = customMapping?.salesModel || findKey(['sales model', 'sales_model', 'salesmodel', 'business model', 'model']);
-    const keyServiceProvider = customMapping?.serviceProvider || findKey(['service provider', 'service_provider', 'serviceprovider', 'provider', 'vendor', 'contractor']);
+    const keyCustGroup  = getMappedKey('custGroup') || findKey(['customer group', 'customergroup', 'customer_group', 'client group', 'client', 'customer', 'account']);
+    const keyStatus     = getMappedKey('status') || findKey(['site status', 'sitestatus', 'status', 'active status']);
+    const keySupervisor = getMappedKey('supervisor') || findKey(['supervisor', 'super visor', 'field supervisor']);
 
     // Precise matches for management hierarchy
-    const keySrManager  = customMapping?.srManager || keys.find(k => {
+    const keySrManager  = getMappedKey('srManager') || keys.find(k => {
         const cl = k.trim().toLowerCase();
         return (cl.includes('sr') || cl.includes('senior')) && cl.includes('manager');
     }) || findKey(['sr manager', 'sr. manager', 'senior manager', 'sr mgr']) || "";
 
-    const keyAM = customMapping?.am || keys.find(k => {
+    const keyAM = getMappedKey('am') || keys.find(k => {
         const cl = k.trim().toLowerCase();
         return cl.includes('assistant') && cl.includes('manager');
     }) || findKey(['assistant manager', 'assitant manager', 'ast manager', 'am']) || "";
 
-    const keyManager = customMapping?.manager || keys.find(k => {
+    const keyManager = getMappedKey('manager') || keys.find(k => {
         const cl = k.trim().toLowerCase();
         return cl.includes('manager')
             && !cl.includes('sr') && !cl.includes('senior') && !cl.includes('assistant');
     }) || findKey(['manager', 'mgr', 'site manager']) || "";
 
-    const monthKwList = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec', '2024', '2025', '2026', '2027'];
-    const isMonthColHeader = (k) => {
-        const cl = k.trim().toLowerCase();
-        return monthKwList.some(m => cl.includes(m));
-    };
-
-    // Candidate keys for standalone summary columns (ONLY if sheet lacks month columns)
-    const keyStandaloneBilling = customMapping?.billing || keys.find(k => {
-        if (isMonthColHeader(k)) return false;
+    // Candidate keys for standalone summary columns (in case sheet lacks month columns)
+    const keyStandaloneBilling = getMappedKey('billing') || keys.find(k => {
         const cl = k.trim().toLowerCase();
         if (cl.includes('%') || cl.includes('pct') || cl.includes('share')) return false;
-        return ['total billing', 'billing value', 'billing amount', 'billed amount', 'gross billing'].some(kw => cl.includes(kw));
-    }) || "";
+        return ['total billing', 'billing value', 'billing amount', 'billed amount', 'billed', 'billing', 'revenue', 'site billing', 'bill amt', 'gross billing', 'income', 'sales'].some(kw => cl.includes(kw));
+    }) || findKey(['billing', 'revenue', 'income', 'sales']);
 
-    const keyStandaloneExpense = customMapping?.expense || keys.find(k => {
-        if (isMonthColHeader(k)) return false;
+    const keyStandaloneExpense = getMappedKey('expense') || keys.find(k => {
         const cl = k.trim().toLowerCase();
         if (cl.includes('%') || cl.includes('pct') || cl.includes('share')) return false;
-        return ['total manpower expense', 'total expense', 'manpower expense', 'manpower cost'].some(kw => cl.includes(kw));
-    }) || "";
+        return ['total manpower expense', 'total expense', 'manpower expense', 'manpower cost', 'expense', 'salary', 'manpower', 'wages', 'labor cost', 'direct cost', 'cost'].some(kw => cl.includes(kw));
+    }) || findKey(['expense', 'manpower', 'salary', 'cost']);
 
-    const keyStandaloneCons = customMapping?.consumption || keys.find(k => {
-        if (isMonthColHeader(k)) return false;
+    const keyStandaloneCons = getMappedKey('consumption') || keys.find(k => {
         const cl = k.trim().toLowerCase();
         if (cl.includes('%') || cl.includes('pct') || cl.includes('share') || cl.includes('ratio')) return false;
-        return ['total consumption value', 'total consumption', 'consumption value', 'material consumption'].some(kw => cl.includes(kw));
-    }) || "";
+        return ['total consumption value', 'total consumption', 'consumption value', 'material consumption', 'consumption', 'material cost', 'cons value', 'supplies', 'material', 'replacement value', 'total replacement', 'replacement cost', 'replacement', 'repl value', 'repl cost', 'spares', 'spare parts'].some(kw => cl.includes(kw));
+    }) || findKey(['consumption', 'replacement', 'material', 'supplies', 'spares']);
 
     // Detect pre-calculated Replacement % or Consumption % columns
     const keySheetReplPct = keys.find(k => {
@@ -1694,48 +1679,49 @@ window.normalizeRawData = function(rows, customMapping = null, sheetName = '') {
         return (cl.includes('replacement') || cl.includes('consumption') || cl.includes('material') || cl.includes('repl') || cl.includes('cons')) && (cl.includes('%') || cl.includes('pct') || cl.includes('share') || cl.includes('ratio'));
     }) || "";
 
-    const excludedMonthColKeys = [
-        keySno, keySiteCode, keyRegion, keySiteName, keyCustGroup, keyStatus,
-        keySupervisor, keyAM, keyManager, keySrManager, keySalesModel, keyServiceProvider,
-        keyStandaloneBilling, keyStandaloneExpense, keyStandaloneCons, keySheetReplPct
-    ].filter(k => k && k !== '');
-
     // Detect month columns supporting multiple date & header formats
+    // Auto-detects year from column headers (2026, 2027, etc.)
     const monthsDetected = [];
     const monthPatterns = [
-        { name: 'Jan', keys: ['january', 'jan', '01/', '01-', '/01/', '-01-', '01_', '_01_', '2026-01', '2027-01', 'month 1', 'month-1', 'm01'] },
-        { name: 'Feb', keys: ['february', 'feb', '02/', '02-', '/02/', '-02-', '02_', '_02_', '2026-02', '2027-02', 'month 2', 'month-2', 'm02'] },
-        { name: 'Mar', keys: ['march', 'mar', '03/', '03-', '/03/', '-03-', '03_', '_03_', '2026-03', '2027-03', 'month 3', 'month-3', 'm03'] },
-        { name: 'Apr', keys: ['april', 'apr', '04/', '04-', '/04/', '-04-', '04_', '_04_', '2026-04', '2027-04', 'month 4', 'month-4', 'm04'] },
-        { name: 'May', keys: ['may', '05/', '05-', '/05/', '-05-', '05_', '_05_', '2026-05', '2027-05', 'month 5', 'month-5', 'm05'] },
-        { name: 'Jun', keys: ['june', 'jun', '06/', '06-', '/06/', '-06-', '06_', '_06_', '2026-06', '2027-06', 'month 6', 'month-6', 'm06'] },
-        { name: 'Jul', keys: ['july', 'jul', '07/', '07-', '/07/', '-07-', '07_', '_07_', '2026-07', '2027-07', 'month 7', 'month-7', 'm07'] },
-        { name: 'Aug', keys: ['august', 'aug', '08/', '08-', '/08/', '-08-', '08_', '_08_', '2026-08', '2027-08', 'month 8', 'month-8', 'm08'] },
-        { name: 'Sep', keys: ['september', 'sept', 'sep', '09/', '09-', '/09/', '-09-', '09_', '_09_', '2026-09', '2027-09', 'month 9', 'month-9', 'm09'] },
-        { name: 'Oct', keys: ['october', 'oct', '10/', '10-', '/10/', '-10-', '10_', '_10_', '2026-10', '2027-10', 'month 10', 'month-10', 'm10'] },
-        { name: 'Nov', keys: ['november', 'nov', '11/', '11-', '/11/', '-11-', '11_', '_11_', '2026-11', '2027-11', 'month 11', 'month-11', 'm11'] },
-        { name: 'Dec', keys: ['december', 'dec', '12/', '12-', '/12/', '-12-', '12_', '_12_', '2026-12', '2027-12', 'month 12', 'month-12', 'm12'] }
+        { name: 'Jan', keys: ['jan', 'january', '01/', '01-', '/01/', '-01-', '01_', '_01_', '1/', '1-', '/1/', '-1-', '1_', '_1_', '2026-01', '2027-01', 'month 1', 'month-1', 'm01', 'm1'] },
+        { name: 'Feb', keys: ['feb', 'february', '02/', '02-', '/02/', '-02-', '02_', '_02_', '2/', '2-', '/2/', '-2-', '2_', '_2_', '2026-02', '2027-02', 'month 2', 'month-2', 'm02', 'm2'] },
+        { name: 'Mar', keys: ['mar', 'march', '03/', '03-', '/03/', '-03-', '03_', '_03_', '3/', '3-', '/3/', '-3-', '3_', '_3_', '2026-03', '2027-03', 'month 3', 'month-3', 'm03', 'm3'] },
+        { name: 'Apr', keys: ['apr', 'april', '04/', '04-', '/04/', '-04-', '04_', '_04_', '4/', '4-', '/4/', '-4-', '4_', '_4_', '2026-04', '2027-04', 'month 4', 'month-4', 'm04', 'm4'] },
+        { name: 'May', keys: ['may', '05/', '05-', '/05/', '-05-', '05_', '_05_', '5/', '5-', '/5/', '-5-', '5_', '_5_', '2026-05', '2027-05', 'month 5', 'month-5', 'm05', 'm5'] },
+        { name: 'Jun', keys: ['jun', 'june', '06/', '06-', '/06/', '-06-', '06_', '_06_', '6/', '6-', '/6/', '-6-', '6_', '_6_', '2026-06', '2027-06', 'month 6', 'month-6', 'm06', 'm6'] },
+        { name: 'Jul', keys: ['jul', 'july', '07/', '07-', '/07/', '-07-', '07_', '_07_', '7/', '7-', '/7/', '-7-', '7_', '_7_', '2026-07', '2027-07', 'month 7', 'month-7', 'm07', 'm7'] },
+        { name: 'Aug', keys: ['aug', 'august', '08/', '08-', '/08/', '-08-', '08_', '_08_', '8/', '8-', '/8/', '-8-', '8_', '_8_', '2026-08', '2027-08', 'month 8', 'month-8', 'm08', 'm8'] },
+        { name: 'Sep', keys: ['sep', 'sept', 'september', '09/', '09-', '/09/', '-09-', '09_', '_09_', '9/', '9-', '/9/', '-9-', '9_', '_9_', '2026-09', '2027-09', 'month 9', 'month-9', 'm09', 'm9'] },
+        { name: 'Oct', keys: ['oct', 'october', '10/', '10-', '/10/', '-10-', '10_', '_10_', '2026-10', '2027-10', 'month 10', 'month-10', 'm10'] },
+        { name: 'Nov', keys: ['nov', 'november', '11/', '11-', '/11/', '-11-', '11_', '_11_', '2026-11', '2027-11', 'month 11', 'month-11', 'm11'] },
+        { name: 'Dec', keys: ['dec', 'december', '12/', '12-', '/12/', '-12-', '12_', '_12_', '2026-12', '2027-12', 'month 12', 'month-12', 'm12'] }
     ];
+
+    // Auto-detect years present in column headers (e.g. 2026, 2027)
+    const detectedYears = new Set();
+    keys.forEach(k => {
+        const yearMatch = k.match(/20(\d{2})/);
+        if (yearMatch) detectedYears.add(parseInt('20' + yearMatch[1]));
+    });
+    const sortedYears = Array.from(detectedYears).sort();
+    // Update global month names list based on actually detected months
+    const detectedMonthNames = [];
 
     monthPatterns.forEach(mp => {
         let bCol = "", eCol = "", cCol = "";
         keys.forEach(k => {
             const kLower = k.trim().toLowerCase();
-            if (excludedMonthColKeys.includes(k) || ['remarks', 'notes', 'comment', 'description', 'detail'].some(x => kLower.includes(x))) {
-                return;
-            }
-
             const matchesMonth = mp.keys.some(mk => kLower.includes(mk));
             if (matchesMonth) {
-                if (kLower.includes('bill') || kLower.includes('revenue') || kLower.includes('invoic') || kLower.includes('billed')) {
+                if (kLower.includes('bill') || kLower.includes('revenue') || kLower.includes('invoic') || kLower.includes('sales') || kLower.includes('amt') || kLower.includes('amount')) {
                     bCol = k;
-                } else if (kLower.includes('exp') || kLower.includes('manpower') || kLower.includes('salary') || kLower.includes('wage') || kLower.includes('labor')) {
+                } else if (kLower.includes('exp') || kLower.includes('manpower') || kLower.includes('salary') || kLower.includes('wage') || kLower.includes('cost') || kLower.includes('labor')) {
                     eCol = k;
-                } else if (kLower.includes('consum') || kLower.includes('material') || kLower.includes('suppli') || kLower.includes('spare') || kLower.includes('replacement cost') || kLower.includes('replacement value') || kLower.includes('repl cost') || kLower.includes('repl value')) {
+                } else if (kLower.includes('consum') || kLower.includes('value') || kLower.includes('material') || kLower.includes('suppli') || kLower.includes('replace') || kLower.includes('repl') || kLower.includes('spare')) {
                     cCol = k;
                 } else {
-                    const isExactMonthHeader = mp.keys.some(mk => kLower === mk || kLower === mk + ' 2026' || kLower === mk + ' 2025' || kLower === mk + ' 2027');
-                    if (isExactMonthHeader && !bCol) bCol = k;
+                    // Fallback: If header is JUST the month name (e.g. "JULY 2026" or "AUG 26")
+                    if (!bCol) bCol = k;
                 }
             }
         });
@@ -1743,18 +1729,13 @@ window.normalizeRawData = function(rows, customMapping = null, sheetName = '') {
         if (bCol || eCol || cCol) {
             let yearLabel = '';
             const anyCol = bCol || eCol || cCol;
-            const yearMatch4 = anyCol.match(/20\d{2}/);
-            const yearMatch2 = anyCol.match(/(?:^|[\s/_\-])([2-3]\d)(?:$|[\s/_\-])/);
-            if (yearMatch4) {
-                yearLabel = ' ' + yearMatch4[0];
-            } else if (yearMatch2) {
-                yearLabel = ' 20' + yearMatch2[1];
-            }
+            const yearMatch = anyCol.match(/20\d{2}/);
+            if (yearMatch) yearLabel = ' ' + yearMatch[0];
 
+            const monthKey = mp.name + yearLabel; // e.g. "Jan 2026" or "Jul 2026"
+            detectedMonthNames.push(monthKey);
             monthsDetected.push({
-                name: mp.name,
-                yearLabel: yearLabel,
-                shortName: mp.name,
+                name: monthKey,
                 billingCol: bCol,
                 expenseCol: eCol,
                 consumptionCol: cCol
@@ -1762,56 +1743,21 @@ window.normalizeRawData = function(rows, customMapping = null, sheetName = '') {
         }
     });
 
-    if (monthsDetected.length === 0 && sheetName) {
-        const sLower = String(sheetName).trim().toLowerCase();
-        monthPatterns.forEach(mp => {
-            const matchesSheet = mp.keys.some(mk => sLower.includes(mk));
-            if (matchesSheet && !monthsDetected.some(m => m.shortName === mp.name)) {
-                let yearLabel = '';
-                const yearMatch4 = sLower.match(/20\d{2}/);
-                const yearMatch2 = sLower.match(/(?:^|[\s/_\-])([2-3]\d)(?:$|[\s/_\-])/);
-                if (yearMatch4) yearLabel = ' ' + yearMatch4[0];
-                else if (yearMatch2) yearLabel = ' 20' + yearMatch2[1];
-
-                monthsDetected.push({
-                    name: mp.name,
-                    yearLabel: yearLabel,
-                    shortName: mp.name,
-                    billingCol: keyStandaloneBilling,
-                    expenseCol: keyStandaloneExpense,
-                    consumptionCol: keyStandaloneCons
-                });
-            }
-        });
-    }
-
-    let detectedDefaultYear = '';
-    for (const m of monthsDetected) {
-        if (m.yearLabel) {
-            detectedDefaultYear = m.yearLabel;
-            break;
-        }
-    }
-    if (!detectedDefaultYear) detectedDefaultYear = ' 2026';
-
-    const detectedMonthNames = [];
-    monthsDetected.forEach(m => {
-        if (!m.yearLabel) m.yearLabel = detectedDefaultYear;
-        m.name = m.shortName + m.yearLabel;
-        detectedMonthNames.push(m.name);
-    });
-
+    // Update global MONTH_NAMES with the actual months found in this file
     if (detectedMonthNames.length > 0) {
         window.MONTH_NAMES = detectedMonthNames;
     }
 
+    // Read precalculated averages candidate keys ONCE outside the loop for speed
     const keyAvgConsumption = findKey(['average monthly consumption', 'avg monthly consumption']);
     const keyAvgBilling     = findKey(['average monthly billing', 'avg monthly billing']);
     const keyAvgManpower    = findKey(['average manpower expense', 'avg manpower expense']);
     const keyAvgMargin      = findKey(['avg gross margin', 'average gross margin', 'gross margin']);
 
+    // Clean and normalize each site row
     const normalizedSites = rows.map((r, idx) => {
         const siteCode = String(r[keySiteCode] || `ST-SITE-${idx + 1}`).trim();
+        // If no siteName column found, fall back to siteCode so we don't show blank
         const siteName = keySiteName ? String(r[keySiteName] || siteCode).trim() : siteCode;
         const region = String(r[keyRegion] || 'UNASSIGNED').trim().toUpperCase();
         const custGroup = String(r[keyCustGroup] || 'General').trim();
@@ -1820,8 +1766,6 @@ window.normalizeRawData = function(rows, customMapping = null, sheetName = '') {
         const am = String(r[keyAM] || 'N/A').trim();
         const manager = String(r[keyManager] || 'N/A').trim();
         const srManager = String(r[keySrManager] || 'N/A').trim();
-        const salesModel = String(r[keySalesModel] || 'N/A').trim();
-        const serviceProvider = String(r[keyServiceProvider] || 'N/A').trim();
 
         let totalBilling = 0;
         let totalExpense = 0;
@@ -1836,7 +1780,7 @@ window.normalizeRawData = function(rows, customMapping = null, sheetName = '') {
             const eVal = parseNumber(r[m.expenseCol]);
             const cVal = parseNumber(r[m.consumptionCol]);
 
-            const metricObj = {
+            monthlyMetrics[m.name] = {
                 billing: bVal,
                 expense: eVal,
                 consumption: cVal,
@@ -1844,28 +1788,15 @@ window.normalizeRawData = function(rows, customMapping = null, sheetName = '') {
                 netProfit: bVal - (eVal + cVal)
             };
 
-            monthlyMetrics[m.name] = metricObj;
-            if (m.shortName && !monthlyMetrics[m.shortName]) {
-                monthlyMetrics[m.shortName] = metricObj;
-            }
-
             totalBilling += bVal;
             totalExpense += eVal;
             totalConsumption += cVal;
             if (bVal > 0 || eVal > 0 || cVal > 0) activeMonthCount++;
         });
 
-        // 2. Explicit custom mapping override or standalone summary fallback
-        if (customMapping && (customMapping.billing || customMapping.expense || customMapping.consumption)) {
-            const bCustom = customMapping.billing ? parseNumber(r[customMapping.billing]) : 0;
-            const eCustom = customMapping.expense ? parseNumber(r[customMapping.expense]) : 0;
-            const cCustom = customMapping.consumption ? parseNumber(r[customMapping.consumption]) : 0;
-            if (bCustom > 0 || eCustom > 0 || cCustom > 0) {
-                totalBilling = bCustom;
-                totalExpense = eCustom;
-                totalConsumption = cCustom;
-            }
-        } else if (totalBilling === 0) {
+        // 2. FALLBACK A: Standalone Summary Column Matcher
+        // If month columns yielded 0 billing, read standalone summary columns!
+        if (totalBilling === 0) {
             const bStandalone = parseNumber(r[keyStandaloneBilling]);
             const eStandalone = parseNumber(r[keyStandaloneExpense]);
             const cStandalone = parseNumber(r[keyStandaloneCons]);
@@ -1877,11 +1808,14 @@ window.normalizeRawData = function(rows, customMapping = null, sheetName = '') {
             }
         }
 
+        // 2b. If totalConsumption is 0 but an explicit Replacement % / Cons % column exists in the Excel sheet:
         const explicitPct = keySheetReplPct ? parseNumber(r[keySheetReplPct]) : 0;
         if (totalConsumption === 0 && explicitPct > 0 && totalBilling > 0) {
             totalConsumption = Math.round((totalBilling * explicitPct) / 100);
         }
 
+        // 3. FALLBACK B: Universal Numeric Auto-Discovery Safety Net
+        // If totalBilling is STILL 0, inspect non-empty numeric cells (ONLY for real sites)
         if (totalBilling === 0 && totalExpense === 0 && totalConsumption === 0) {
             const hasRealCode = keySiteCode && r[keySiteCode] && String(r[keySiteCode]).trim() !== '';
             const hasRealName = keySiteName && r[keySiteName] && String(r[keySiteName]).trim() !== '';
@@ -1909,6 +1843,7 @@ window.normalizeRawData = function(rows, customMapping = null, sheetName = '') {
         const sheetAvgExpense     = parseNumber(r[keyAvgManpower]);
         const sheetAvgMargin      = parseNumber(r[keyAvgMargin]);
 
+
         const avgBilling     = sheetAvgBilling > 0 ? sheetAvgBilling : Math.round(totalBilling / mCount);
         const avgExpense     = sheetAvgExpense > 0 ? sheetAvgExpense : Math.round(totalExpense / mCount);
         const avgConsumption = sheetAvgConsumption > 0 ? sheetAvgConsumption : Math.round(totalConsumption / mCount);
@@ -1924,8 +1859,6 @@ window.normalizeRawData = function(rows, customMapping = null, sheetName = '') {
             siteName,
             region,
             customerGroup: custGroup,
-            salesModel,
-            serviceProvider,
             siteStatus: status,
             supervisor,
             assistantManager: am,
@@ -2204,18 +2137,9 @@ window.renderRegionConsumptionReport = function(sites, thresholdPct = 7.0) {
     let totalHighShareSitesCount = 0;
     let html = '';
 
-    const monthLabel = window.selectedMonth && window.selectedMonth !== 'ALL'
-        ? `Month: ${window.selectedMonth}`
-        : (() => {
-            const mn = (window.MONTH_NAMES || []).filter(m => /\d{4}/.test(m));
-            if (mn.length > 0) {
-                const first = mn[0].split(' ')[0];
-                const last  = mn[mn.length - 1].split(' ')[0];
-                const year  = mn[mn.length - 1].split(' ')[1] || '';
-                return first === last ? `Overall (${first} ${year})` : `Overall (${first}–${last} ${year})`;
-            }
-            return 'Overall (All Months)';
-        })();
+    const monthLabel = window.selectedMonth && window.selectedMonth !== 'ALL' 
+        ? `Month: ${window.selectedMonth} 2026` 
+        : `Overall (Jan-Jul/Aug 2026)`;
 
     Object.keys(regionMap).sort().forEach(regionName => {
         const regSites = regionMap[regionName];
@@ -2800,47 +2724,25 @@ window.renderMonthlyTrendsReport = function(sites) {
     const tbody = document.getElementById('tblMonthlyTrendsBody');
     if (!tbody) return;
 
-    let monthKeys = [];
-    if (window.MONTH_NAMES && window.MONTH_NAMES.length > 0) {
-        monthKeys = window.MONTH_NAMES;
-    } else {
-        const monthKeySet = new Set();
-        sites.forEach(s => {
-            if (s.monthlyMetrics) {
-                Object.keys(s.monthlyMetrics).forEach(k => {
-                    if (k.includes(' ')) monthKeySet.add(k);
-                });
-            }
-        });
-        monthKeys = Array.from(monthKeySet);
-    }
+    // Keys MUST match parser storage — parser uses title-case: 'Jan', 'Feb', etc.
+    const months = [
+        { key: 'Jan', label: 'January 2026' },
+        { key: 'Feb', label: 'February 2026' },
+        { key: 'Mar', label: 'March 2026' },
+        { key: 'Apr', label: 'April 2026' },
+        { key: 'May', label: 'May 2026' },
+        { key: 'Jun', label: 'June 2026' },
+        { key: 'Jul', label: 'July 2026' },
+        { key: 'Aug', label: 'August 2026' }
+    ];
 
-    if (monthKeys.length === 0) {
-        monthKeys = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    }
-
-    const monthFullMap = {
-        Jan: 'January', Feb: 'February', Mar: 'March', Apr: 'April',
-        May: 'May', Jun: 'June', Jul: 'July', Aug: 'August',
-        Sep: 'September', Oct: 'October', Nov: 'November', Dec: 'December'
-    };
-
-    const monthlyTotals = monthKeys.map(mKey => {
+    const monthlyTotals = months.map(({ key, label }) => {
         let billing = 0;
         let expense = 0;
         let consumption = 0;
 
-        const parts = mKey.split(' ');
-        const shortMonth = parts[0];
-        const yearPart = parts[1] || '';
-        const fullMonthName = (monthFullMap[shortMonth] || shortMonth) + (yearPart ? ' ' + yearPart : '');
-
         sites.forEach(s => {
-            if (!s.monthlyMetrics) return;
-            let mData = s.monthlyMetrics[mKey];
-            if (!mData) {
-                mData = s.monthlyMetrics[shortMonth];
-            }
+            const mData = s.monthlyMetrics ? s.monthlyMetrics[key] : null;
             if (mData) {
                 billing     += mData.billing     || 0;
                 expense     += mData.expense     || 0;
@@ -2851,9 +2753,10 @@ window.renderMonthlyTrendsReport = function(sites) {
         const profit = billing - (expense + consumption);
         const margin = billing > 0 ? Number(((profit / billing) * 100).toFixed(2)) : 0;
 
-        return { key: mKey, month: shortMonth, label: fullMonthName, billing, expense, consumption, profit, margin };
+        return { key, label, billing, expense, consumption, profit, margin };
     });
 
+    // Only render months that have at least some data
     const activeMonths = monthlyTotals.filter(mt => mt.billing > 0 || mt.expense > 0 || mt.consumption > 0);
 
     if (activeMonths.length === 0) {
@@ -2864,8 +2767,8 @@ window.renderMonthlyTrendsReport = function(sites) {
         return;
     }
 
-    tbody.innerHTML = activeMonths.map(mt => `
-        <tr class="hover:bg-gray-800/40 transition">
+    tbody.innerHTML = monthlyTotals.map(mt => `
+        <tr class="hover:bg-gray-800/40 transition ${mt.billing === 0 && mt.expense === 0 ? 'opacity-30' : ''}">
             <td class="py-3 px-4 font-bold text-white">${mt.label}</td>
             <td class="py-3 px-4 text-right font-mono font-semibold text-white">${formatRupee(mt.billing)}</td>
             <td class="py-3 px-4 text-right font-mono text-red-400">${formatRupee(mt.expense)}</td>
@@ -2875,8 +2778,9 @@ window.renderMonthlyTrendsReport = function(sites) {
         </tr>
     `).join('');
 
+    // Trigger Chart update
     if (window.updateMonthlyTrendsChart) {
-        window.updateMonthlyTrendsChart(activeMonths);
+        window.updateMonthlyTrendsChart(monthlyTotals);
     }
 };
 
@@ -2884,6 +2788,7 @@ window.renderMonthlyTrendsReport = function(sites) {
  * ── INTERACTIVE SITE DETAIL & CALCULATION AUDIT MODAL ────────────────
  */
 window.openSiteDetailModal = function(siteCode) {
+    // 1. Search filteredDataset first (which has activeBilling/Expense/Consumption), then activeDataset
     const dataset = (window.filteredDataset && window.filteredDataset.length > 0)
         ? window.filteredDataset
         : (window.activeDataset || []);
@@ -2908,8 +2813,9 @@ window.openSiteDetailModal = function(siteCode) {
     const selMonth = window.selectedMonth || 'ALL';
     const mName = selMonth !== 'ALL' 
         ? `Month: ${selMonth} 2026` 
-        : 'Jan–Dec 2026 (Aggregated)';
+        : 'Jan–Aug 2026 (Aggregated)';
 
+    // 2. Compute b, e, c reliably
     let b = 0, e = 0, c = 0;
 
     if (selMonth !== 'ALL' && site.monthlyMetrics && site.monthlyMetrics[selMonth]) {
@@ -2917,6 +2823,7 @@ window.openSiteDetailModal = function(siteCode) {
         e = site.monthlyMetrics[selMonth].expense || 0;
         c = site.monthlyMetrics[selMonth].consumption || 0;
     } else {
+        // Fallback: active metrics -> total metrics -> sum of monthlyMetrics
         b = site.activeBilling !== undefined && site.activeBilling > 0 ? site.activeBilling : (site.totalBilling || 0);
         e = site.activeExpense !== undefined && site.activeExpense > 0 ? site.activeExpense : (site.totalExpense || 0);
         c = site.activeConsumption !== undefined && site.activeConsumption > 0 ? site.activeConsumption : (site.totalConsumption || 0);
@@ -2946,6 +2853,7 @@ window.openSiteDetailModal = function(siteCode) {
     else if (parseFloat(marginPct) >= 5)  healthBadge = '<span class="px-3 py-1 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 font-bold text-xs">Moderate Margin (5–20%)</span>';
     else                                   healthBadge = '<span class="px-3 py-1 rounded-full bg-red-500/20 text-red-400 border border-red-500/30 font-bold text-xs">Critical Margin (&lt;5%)</span>';
 
+    // Compute Advanced Executive Analysis Metrics for this site
     const allSites = (window.filteredDataset && window.filteredDataset.length > 0) ? window.filteredDataset : (window.activeDataset || []);
     const totalPortfolioBill = allSites.reduce((sum, s) => sum + (s.activeBilling || 0), 0);
     const totalPortfolioCost = allSites.reduce((sum, s) => sum + ((s.activeExpense || 0) + (s.activeConsumption || 0)), 0);
@@ -2969,44 +2877,12 @@ window.openSiteDetailModal = function(siteCode) {
     else if (b >= portfolioAvgBill) benchmarkTag = 'High Scale Site';
     else benchmarkTag = 'Small Scale Site';
 
-    const monthFull = { Jan:'January', Feb:'February', Mar:'March', Apr:'April', May:'May', Jun:'June', Jul:'July', Aug:'August', Sep:'September', Oct:'October', Nov:'November', Dec:'December' };
-    const all12Months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-
-    let monthRowsHtml = '';
-    all12Months.forEach(shortM => {
-        let m = null;
-        if (site.monthlyMetrics) {
-            const foundKey = Object.keys(site.monthlyMetrics).find(k => k === shortM || k.startsWith(shortM + ' ') || k.toLowerCase().startsWith(shortM.toLowerCase()));
-            if (foundKey) m = site.monthlyMetrics[foundKey];
-        }
-
-        const bVal = m ? (m.billing || 0) : 0;
-        const eVal = m ? (m.expense || 0) : 0;
-        const cVal = m ? (m.consumption || 0) : 0;
-        const mProfit = bVal - (eVal + cVal);
-        const mMargin = bVal > 0 ? ((mProfit / bVal) * 100).toFixed(2) : '0.00';
-        const displayLabel = monthFull[shortM] || shortM;
-
-        monthRowsHtml += `
-            <tr class="hover:bg-gray-900/60 transition">
-                <td class="py-2 px-3 font-sans font-bold text-white">${displayLabel}</td>
-                <td class="py-2 px-3 text-right">${formatRupee(bVal)}</td>
-                <td class="py-2 px-3 text-right text-red-400">${formatRupee(eVal)}</td>
-                <td class="py-2 px-3 text-right text-purple-400">${formatRupee(cVal)}</td>
-                <td class="py-2 px-3 text-right font-bold ${mProfit >= 0 ? 'text-emerald-400' : 'text-red-400'}">${formatRupee(mProfit)}</td>
-                <td class="py-2 px-3 text-right font-bold ${parseFloat(mMargin) >= 15 ? 'text-emerald-400' : 'text-amber-400'}">${mMargin}%</td>
-            </tr>
-        `;
-    });
-
     let html = `
         <!-- Status & Hierarchy Banner -->
         <div class="flex flex-wrap items-center justify-between gap-3 p-4 rounded-xl bg-gray-900 border border-gray-800">
             <div>
-                <span class="text-[11px] text-gray-400 block uppercase font-bold tracking-wider">Management Hierarchy & Attributes</span>
+                <span class="text-[11px] text-gray-400 block uppercase font-bold tracking-wider">Management Hierarchy</span>
                 <span class="text-xs text-gray-200">
-                    Sales Model: <strong class="text-indigo-300">${site.salesModel || 'N/A'}</strong> &nbsp;|&nbsp;
-                    Service Provider: <strong class="text-sky-300">${site.serviceProvider || 'N/A'}</strong> &nbsp;|&nbsp;
                     Sr Manager: <strong class="text-white">${site.srManager}</strong> &nbsp;|&nbsp;
                     Manager: <strong class="text-white">${site.manager}</strong> &nbsp;|&nbsp;
                     AM: <strong>${site.assistantManager}</strong> &nbsp;|&nbsp;
@@ -3108,7 +2984,7 @@ window.openSiteDetailModal = function(siteCode) {
         <div class="space-y-2">
             <h4 class="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center gap-2">
                 <i class="fa-solid fa-calendar-days text-amber-400"></i>
-                Month-by-Month Performance History
+                Month-by-Month Performance History (Jan–Aug 2026)
             </h4>
             <div class="overflow-x-auto rounded-xl border border-gray-800">
                 <table class="w-full text-left text-xs font-mono">
@@ -3123,12 +2999,28 @@ window.openSiteDetailModal = function(siteCode) {
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-800/40 text-gray-300">
-                        ${monthRowsHtml}
-                    </tbody>
-                </table>
-            </div>
-        </div>
     `;
+
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug'];
+    const monthFull = { Jan:'January', Feb:'February', Mar:'March', Apr:'April', May:'May', Jun:'June', Jul:'July', Aug:'August' };
+
+    months.forEach(mKey => {
+        const m = site.monthlyMetrics ? site.monthlyMetrics[mKey] : null;
+        if (m && (m.billing > 0 || m.expense > 0 || m.consumption > 0)) {
+            const mProfit = m.billing - (m.expense + m.consumption);
+            const mMargin = m.billing > 0 ? ((mProfit / m.billing) * 100).toFixed(2) : '0.00';
+            html += `
+                <tr class="hover:bg-gray-900/60 transition">
+                    <td class="py-2 px-3 font-sans font-bold text-white">${monthFull[mKey]}</td>
+                    <td class="py-2 px-3 text-right">${formatRupee(m.billing)}</td>
+                    <td class="py-2 px-3 text-right text-red-400">${formatRupee(m.expense)}</td>
+                    <td class="py-2 px-3 text-right text-purple-400">${formatRupee(m.consumption)}</td>
+                    <td class="py-2 px-3 text-right font-bold ${mProfit >= 0 ? 'text-emerald-400' : 'text-red-400'}">${formatRupee(mProfit)}</td>
+                    <td class="py-2 px-3 text-right font-bold ${parseFloat(mMargin) >= 15 ? 'text-emerald-400' : 'text-amber-400'}">${mMargin}%</td>
+                </tr>
+            `;
+        }
+    });
 
     html += `
                     </tbody>
@@ -4097,24 +3989,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (cached) {
         try {
             const payload = JSON.parse(cached);
-            // Purge any old cache versions (pre-v3) that may contain phantom months
-            if (!payload || payload.schema !== 'v3') {
-                localStorage.removeItem('site_analytics_cached_dataset');
-                window.loadSampleData();
-                return;
-            }
-            if (payload.sites && payload.sites.length > 0) {
+            if (payload && payload.sites && payload.sites.length > 0) {
+                // If cached payload contains > 5,000 corrupt/dummy sites, purge cache automatically
                 if (payload.sites.length > 5000) {
                     localStorage.removeItem('site_analytics_cached_dataset');
                     window.loadSampleData();
                     return;
                 }
-
-                // Restore MONTH_NAMES from cached payload
-                if (payload.monthNames && Array.isArray(payload.monthNames) && payload.monthNames.length > 0) {
-                    window.MONTH_NAMES = payload.monthNames;
-                }
-
                 document.getElementById('datasetTitle').innerText = `Restored Session: ${payload.filename || 'Uploaded File'} (${payload.sites.length} Sites)`;
                 window.setActiveDataset(payload.sites, payload.filename, false);
                 return;
@@ -4156,28 +4037,10 @@ window.handleFileUpload = function(event) {
     if (titleEl) titleEl.innerText = `Processing Excel file: ${file.name}... Please wait...`;
 
     window.parseExcelFile(file, (processedData, fileName) => {
+        alert("✅ Successfully loaded " + processedData.length + " sites from " + fileName + "!");
         if (titleEl) titleEl.innerText = `Uploaded: ${fileName} (${processedData.length} Sites)`;
         window.setActiveDataset(processedData, fileName, true);
         
-        // Auto-prompt column mapping modal if custom headers / non-standard format uploaded
-        if (window.currentRawRows && window.currentRawRows.length > 0) {
-            const sample = window.currentRawRows[0];
-            const keys = Object.keys(sample);
-            const hasBilling = keys.some(k => ['billing', 'revenue', 'billed', 'sales', 'income'].some(kw => k.toLowerCase().includes(kw)));
-            const hasSalesModel = keys.some(k => ['sales model', 'model', 'sales_model'].some(kw => k.toLowerCase().includes(kw)));
-            const hasServiceProvider = keys.some(k => ['service provider', 'provider', 'vendor'].some(kw => k.toLowerCase().includes(kw)));
-
-            if (!hasBilling || !hasSalesModel || !hasServiceProvider) {
-                setTimeout(() => {
-                    window.showColumnMappingModal();
-                }, 300);
-            } else {
-                alert("✅ Successfully loaded " + processedData.length + " sites from " + fileName + "!\n\nIf you want to verify or change column mappings, click the 'Map Columns' button in the top menu.");
-            }
-        } else {
-            alert("✅ Successfully loaded " + processedData.length + " sites from " + fileName + "!");
-        }
-
         if (inputElement) {
             inputElement.value = '';
         }
@@ -4379,10 +4242,8 @@ window.setActiveDataset = function(sites, sourceName = '', shouldCache = true) {
     if (shouldCache && sites && sites.length > 0) {
         try {
             const payload = {
-                schema: 'v3',  // bump version to purge stale caches with phantom months
                 filename: sourceName || 'Uploaded Excel Data',
                 timestamp: new Date().toISOString(),
-                monthNames: window.MONTH_NAMES || [],
                 sites: sites
             };
             localStorage.setItem('site_analytics_cached_dataset', JSON.stringify(payload));
@@ -4453,23 +4314,14 @@ function populateFilterDropdowns(sites) {
     const regions = new Set();
     const statuses = new Set();
     const srManagers = new Set();
-    const monthsSet = new Set();
-
-    if (window.MONTH_NAMES && Array.isArray(window.MONTH_NAMES)) {
-        window.MONTH_NAMES.forEach(m => monthsSet.add(m));
-    }
+    const monthsSet = new Set(window.MONTH_NAMES || []);
 
     sites.forEach(s => {
         if (s.region) regions.add(s.region);
         if (s.siteStatus) statuses.add(s.siteStatus);
         if (s.srManager) srManagers.add(s.srManager);
         if (s.monthlyMetrics) {
-            Object.keys(s.monthlyMetrics).forEach(m => {
-                const metric = s.monthlyMetrics[m];
-                if (metric && (metric.billing > 0 || metric.expense > 0 || metric.consumption > 0)) {
-                    monthsSet.add(m);
-                }
-            });
+            Object.keys(s.monthlyMetrics).forEach(m => monthsSet.add(m));
         }
     });
 
@@ -4482,34 +4334,12 @@ function populateFilterDropdowns(sites) {
     selSrManager.innerHTML = '<option value="ALL">All Sr Managers</option>' + 
         Array.from(srManagers).sort().map(sr => `<option value="${sr}">${sr}</option>`).join('');
 
+    // Dynamically populate month filter from detected months in the uploaded file
     if (selMonth) {
-        const rawMonths = Array.from(monthsSet);
-        const monthOrderMap = { Jan: 1, Feb: 2, Mar: 3, Apr: 4, May: 5, Jun: 6, Jul: 7, Aug: 8, Sep: 9, Oct: 10, Nov: 11, Dec: 12 };
-
-        let validMonths = rawMonths.filter(m => {
-            const shortName = m.split(' ')[0];
-            return monthOrderMap[shortName] !== undefined;
-        });
-
-        const hasYearStamped = validMonths.some(m => /\d{4}/.test(m));
-        if (hasYearStamped) {
-            validMonths = validMonths.filter(m => /\d{4}/.test(m));
-        }
-
-        validMonths.sort((a, b) => {
-            const aShort = a.split(' ')[0];
-            const bShort = b.split(' ')[0];
-            const aYearMatch = a.match(/20\d{2}/);
-            const bYearMatch = b.match(/20\d{2}/);
-            const aYear = aYearMatch ? parseInt(aYearMatch[0]) : 2026;
-            const bYear = bYearMatch ? parseInt(bYearMatch[0]) : 2026;
-            if (aYear !== bYear) return aYear - bYear;
-            return (monthOrderMap[aShort] || 99) - (monthOrderMap[bShort] || 99);
-        });
-
-        if (validMonths.length > 0) {
+        const sortedMonths = Array.from(monthsSet);
+        if (sortedMonths.length > 0) {
             selMonth.innerHTML = '<option value="ALL">All Months (Total/Avg)</option>' +
-                validMonths.map(m => `<option value="${m}">${m}</option>`).join('');
+                sortedMonths.map(m => `<option value="${m}">${m}</option>`).join('');
         }
     }
 }
@@ -4549,19 +4379,15 @@ window.applyFilters = function() {
         let cVal = s.totalConsumption;
 
         if (monthVal !== 'ALL' && s.monthlyMetrics) {
-            // Try exact year-stamped key first (e.g. "Jul 2026"), then short key ("Jul")
             let mData = s.monthlyMetrics[monthVal];
             if (!mData) {
-                const shortKey = monthVal.split(' ')[0];
-                mData = s.monthlyMetrics[shortKey];
+                const foundKey = Object.keys(s.monthlyMetrics).find(k => k.toLowerCase().startsWith(monthVal.toLowerCase()) || monthVal.toLowerCase().startsWith(k.toLowerCase()));
+                if (foundKey) mData = s.monthlyMetrics[foundKey];
             }
             if (mData) {
                 bVal = mData.billing;
                 eVal = mData.expense;
                 cVal = mData.consumption;
-            } else {
-                // If this month has no data, zero out so it doesn't show phantom values
-                bVal = 0; eVal = 0; cVal = 0;
             }
         }
 
@@ -4627,55 +4453,12 @@ function updateExecutiveKPIs(sites) {
     const expenseRatio = totalBilling > 0 ? ((totalExpense / totalBilling) * 100).toFixed(1) : "0.0";
     const consumptionRatio = totalBilling > 0 ? ((totalConsumption / totalBilling) * 100).toFixed(1) : "0.0";
 
-    const activeMonthsInSites = new Set();
-    sites.forEach(s => {
-        if (s.monthlyMetrics) {
-            Object.keys(s.monthlyMetrics).forEach(mKey => {
-                const metric = s.monthlyMetrics[mKey];
-                if (metric && (metric.billing > 0 || metric.expense > 0 || metric.consumption > 0)) {
-                    if (/\d{4}/.test(mKey)) activeMonthsInSites.add(mKey);
-                }
-            });
-        }
-    });
-
-    const monthOrderMap = { Jan: 1, Feb: 2, Mar: 3, Apr: 4, May: 5, Jun: 6, Jul: 7, Aug: 8, Sep: 9, Oct: 10, Nov: 11, Dec: 12 };
-    const sortedActiveMonths = Array.from(activeMonthsInSites).sort((a, b) => {
-        const aShort = a.split(' ')[0];
-        const bShort = b.split(' ')[0];
-        const aYear = a.match(/20\d{2}/) ? parseInt(a.match(/20\d{2}/)[0]) : 2026;
-        const bYear = b.match(/20\d{2}/) ? parseInt(b.match(/20\d{2}/)[0]) : 2026;
-        if (aYear !== bYear) return aYear - bYear;
-        return (monthOrderMap[aShort] || 99) - (monthOrderMap[bShort] || 99);
-    });
-
-    let monthRangeDisplay = '';
-    if (window.selectedMonth && window.selectedMonth !== 'ALL') {
-        monthRangeDisplay = window.selectedMonth;
-    } else if (sortedActiveMonths.length > 0) {
-        const first = sortedActiveMonths[0].split(' ')[0];
-        const last  = sortedActiveMonths[sortedActiveMonths.length - 1].split(' ')[0];
-        const year  = sortedActiveMonths[sortedActiveMonths.length - 1].split(' ')[1] || '';
-        monthRangeDisplay = first === last ? `${first} ${year}` : `${first}–${last} ${year}`;
-    } else if (window.MONTH_NAMES && window.MONTH_NAMES.length > 0) {
-        const first = window.MONTH_NAMES[0].split(' ')[0];
-        const last  = window.MONTH_NAMES[window.MONTH_NAMES.length - 1].split(' ')[0];
-        const year  = window.MONTH_NAMES[window.MONTH_NAMES.length - 1].split(' ')[1] || '';
-        monthRangeDisplay = first === last ? `${first} ${year}` : `${first}–${last} ${year}`;
-    } else {
-        monthRangeDisplay = 'All Months';
-    }
-
-    // Update the KPI card header label dynamically
-    const billingLabelEl = document.getElementById('kpiTotalBillingLabel');
-    if (billingLabelEl) {
-        billingLabelEl.innerText = window.selectedMonth && window.selectedMonth !== 'ALL'
-            ? `Billing — ${window.selectedMonth}`
-            : `Total Billing (${monthRangeDisplay})`;
-    }
+    const monthNameDisplay = window.selectedMonth && window.selectedMonth !== 'ALL' 
+        ? `Month: ${window.selectedMonth} 2026` 
+        : `Jan-Jul/Aug 2026`;
 
     document.getElementById('kpiTotalBilling').innerText = window.formatRupee(totalBilling);
-    document.getElementById('kpiAvgBilling').innerText = `${window.formatRupee(avgBillingPerSite)} (${monthRangeDisplay})`;
+    document.getElementById('kpiAvgBilling').innerText = `${window.formatRupee(avgBillingPerSite)} (${monthNameDisplay})`;
     document.getElementById('kpiTotalExpense').innerText = window.formatRupee(totalExpense);
     document.getElementById('kpiExpenseRatio').innerText = `${expenseRatio}% of Billing`;
     document.getElementById('kpiTotalConsumption').innerText = window.formatRupee(totalConsumption);
@@ -4778,8 +4561,6 @@ function renderMasterTable(sites) {
                 </button>
             </td>
             <td class="py-2.5 px-3 text-gray-400">${s.customerGroup}</td>
-            <td class="py-2.5 px-3 text-indigo-300 font-medium">${s.salesModel || 'N/A'}</td>
-            <td class="py-2.5 px-3 text-sky-300 font-medium">${s.serviceProvider || 'N/A'}</td>
             <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[11px]">${s.siteStatus}</span></td>
             <td class="py-2.5 px-3 text-gray-400">${s.supervisor}</td>
             <td class="py-2.5 px-3 text-gray-400">${s.assistantManager}</td>
@@ -4868,8 +4649,6 @@ window.showColumnMappingModal = function(rawRows, fileName) {
     const mapSelects = [
         { id: 'mapSiteCode', autoMatch: ['site code', 'code', 'siteid', 'id'] },
         { id: 'mapSiteName', autoMatch: ['site name', 'name', 'unit', 'property', 'facility', 'location'] },
-        { id: 'mapSalesModel', autoMatch: ['sales model', 'model', 'sales_model', 'business model', 'salesmodel'] },
-        { id: 'mapServiceProvider', autoMatch: ['service provider', 'provider', 'vendor', 'contractor', 'service_provider', 'serviceprovider'] },
         { id: 'mapRegion', autoMatch: ['region', 'zone', 'state', 'city', 'area'] },
         { id: 'mapCustGroup', autoMatch: ['customer', 'client', 'group', 'account'] },
         { id: 'mapStatus', autoMatch: ['status', 'state', 'active'] },
@@ -4921,8 +4700,6 @@ window.applyColumnMapping = function() {
     const mapping = {
         siteCode: document.getElementById('mapSiteCode')?.value || '',
         siteName: document.getElementById('mapSiteName')?.value || '',
-        salesModel: document.getElementById('mapSalesModel')?.value || '',
-        serviceProvider: document.getElementById('mapServiceProvider')?.value || '',
         region: document.getElementById('mapRegion')?.value || '',
         custGroup: document.getElementById('mapCustGroup')?.value || '',
         status: document.getElementById('mapStatus')?.value || '',
@@ -4952,77 +4729,28 @@ window.applyColumnMapping = function() {
 };
 
 // ═══════════════════════════════════════════════════════════
-// MULTI-TAB EXCEL SHEET SELECTOR CONTROLLER
+// WORKSHEET SELECTION UI CONTROLLERS
 // ═══════════════════════════════════════════════════════════
-window.pendingSheetResults = null;
-window.pendingFile = null;
-window.pendingCallback = null;
-
-window.showSheetSelectionModal = function(sheetResults, file, callback) {
-    window.pendingSheetResults = sheetResults;
-    window.pendingFile = file;
-    window.pendingCallback = callback;
-
+window.showSheetSelectionModal = function(sheetResults, filename) {
     const modal = document.getElementById('sheetSelectionModal');
-    const container = document.getElementById('sheetButtonsContainer');
-    const subtitle = document.getElementById('sheetModalSubtitle');
+    const container = document.getElementById('sheetSelectionList');
+    if (!modal || !container) return;
 
-    if (!modal || !container) {
-        // Fallback: load largest sheet if modal elements not found
-        const maxSheet = sheetResults.reduce((max, sr) => (!max || sr.count > max.count) ? sr : max, null);
-        callback(maxSheet.processed, `${file.name} [${maxSheet.sheetName}] (${maxSheet.count} Sites)`);
-        return;
-    }
-
-    if (subtitle) {
-        subtitle.innerText = `${file.name} (${sheetResults.length} Tabs detected)`;
-    }
-
-    let totalCombinedSites = sheetResults.reduce((sum, sr) => sum + sr.count, 0);
-
-    let html = `
-        <button onclick="confirmSheetSelection('ALL')" class="w-full text-left p-4 rounded-xl bg-gradient-to-r from-emerald-950/90 to-teal-900/70 hover:from-emerald-900 hover:to-teal-800 text-white font-bold border border-emerald-500/40 shadow-xl transition flex items-center justify-between group">
-            <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-base shadow-inner">
-                    <i class="fa-solid fa-wand-magic-sparkles"></i>
-                </div>
+    container.innerHTML = sheetResults.map((sheet, index) => `
+        <button onclick="window.loadSelectedWorksheet(${index})" class="w-full flex items-center justify-between p-3.5 rounded-xl border border-gray-800 bg-gray-900/60 hover:bg-gray-800 hover:border-brand-500/40 text-left transition group">
+            <div class="flex items-center gap-3">
+                <i class="fa-solid fa-file-excel text-brand-400 text-lg group-hover:scale-110 transition"></i>
                 <div>
-                    <span class="block text-sm font-bold text-emerald-300">✨ Combine & Consolidate All ${sheetResults.length} Tabs</span>
-                    <span class="block text-[11px] text-gray-300 font-normal">Automatically merge site records & monthly metrics across all tabs</span>
+                    <span class="font-bold text-gray-200 block text-xs group-hover:text-white">${sheet.sheetName}</span>
+                    <span class="text-[10px] text-gray-400">Auto-detected sheet rows</span>
                 </div>
             </div>
-            <i class="fa-solid fa-chevron-right text-emerald-400 group-hover:translate-x-1 transition-transform"></i>
+            <span class="px-2.5 py-1 text-[10px] font-bold rounded-lg bg-brand-500/10 text-brand-400 group-hover:bg-brand-500 group-hover:text-white transition">
+                ${sheet.count} sites
+            </span>
         </button>
+    `).join('');
 
-        <div class="my-3 flex items-center gap-2">
-            <div class="h-px bg-gray-800 flex-1"></div>
-            <span class="text-[10px] uppercase tracking-wider font-semibold text-gray-500">Or Pick a Specific Sheet / Tab Below</span>
-            <div class="h-px bg-gray-800 flex-1"></div>
-        </div>
-    `;
-
-    sheetResults.forEach((sr, idx) => {
-        const isLikelyMaster = sr.count > 100;
-        html += `
-            <button onclick="confirmSheetSelection(${idx})" class="w-full text-left p-3.5 rounded-xl bg-gray-900/90 hover:bg-gray-800 text-gray-200 border ${isLikelyMaster ? 'border-brand-500/50 bg-brand-500/5 shadow-md' : 'border-gray-800'} transition flex items-center justify-between group">
-                <div class="flex items-center space-x-3">
-                    <div class="w-9 h-9 rounded-lg ${isLikelyMaster ? 'bg-brand-500/20 text-brand-400' : 'bg-gray-800 text-gray-400'} flex items-center justify-center text-sm font-semibold">
-                        <i class="${isLikelyMaster ? 'fa-solid fa-table-list' : 'fa-regular fa-file-excel'}"></i>
-                    </div>
-                    <div>
-                        <span class="block text-xs font-bold text-white group-hover:text-brand-300 transition">${sr.sheetName}</span>
-                        <span class="block text-[11px] text-gray-400">${sr.count.toLocaleString()} Site Records Found ${isLikelyMaster ? '• <strong class="text-brand-400 font-bold">Master Sheet</strong>' : ''}</span>
-                    </div>
-                </div>
-                <div class="flex items-center gap-1 text-xs font-bold text-brand-400 group-hover:translate-x-0.5 transition-transform">
-                    <span>Load Tab</span>
-                    <i class="fa-solid fa-arrow-right text-[10px]"></i>
-                </div>
-            </button>
-        `;
-    });
-
-    container.innerHTML = html;
     modal.classList.remove('hidden');
 };
 
@@ -5031,127 +4759,60 @@ window.closeSheetSelectionModal = function() {
     if (modal) modal.classList.add('hidden');
 };
 
-window.confirmSheetSelection = function(selectedIndex) {
-    closeSheetSelectionModal();
+window.loadSelectedWorksheet = function(index) {
     const sheetResults = window.pendingSheetResults;
-    const file = window.pendingFile;
-    const callback = window.pendingCallback;
+    const fileName = window.pendingFileName;
+    const callback = window.pendingParserCallback;
 
-    if (!sheetResults || !callback) return;
+    if (!sheetResults || !sheetResults[index]) return;
 
-    if (selectedIndex === 'ALL') {
-        const siteMap = {};
-        const globalMonthsSet = new Set();
+    const selected = sheetResults[index];
+    const finalSites = selected.processed;
+    const loadedSourceName = `${fileName} [${selected.sheetName}]`;
 
-        sheetResults.forEach(sr => {
-            sr.processed.forEach(s => {
-                if (s.monthlyMetrics) {
-                    Object.keys(s.monthlyMetrics).forEach(mKey => {
-                        if (/\d{4}/.test(mKey)) globalMonthsSet.add(mKey);
-                    });
-                }
-                const cCode = String(s.siteCode || s.code || '').trim().toUpperCase();
-                const cName = String(s.siteName || '').trim().toUpperCase();
-                const codeKey = (cCode && cCode !== 'UNASSIGNED' && !cCode.startsWith('ST-SITE'))
-                    ? cCode
-                    : (cName ? cName : (cCode || 'UNKNOWN'));
+    // Re-index site IDs
+    finalSites.forEach((s, idx) => {
+        s.id = idx + 1;
+        s.sno = idx + 1;
+    });
 
-                if (!siteMap[codeKey]) {
-                    siteMap[codeKey] = { ...s, monthlyMetrics: { ...(s.monthlyMetrics || {}) } };
-                } else {
-                    if (s.monthlyMetrics) {
-                        Object.keys(s.monthlyMetrics).forEach(mKey => {
-                            siteMap[codeKey].monthlyMetrics[mKey] = s.monthlyMetrics[mKey];
-                        });
-                    }
-                }
-            });
-        });
+    window.currentRawRows = selected.rawJson;
+    window.currentRawFileName = loadedSourceName;
 
-        const consolidatedSites = Object.values(siteMap).map(s => {
-            let totB = 0, totE = 0, totC = 0;
-            if (s.monthlyMetrics && Object.keys(s.monthlyMetrics).length > 0) {
-                Object.keys(s.monthlyMetrics).forEach(mKey => {
-                    if (/\d{4}/.test(mKey)) {
-                        const m = s.monthlyMetrics[mKey];
-                        if (m) {
-                            totB += (m.billing || 0);
-                            totE += (m.expense || 0);
-                            totC += (m.consumption || 0);
-                        }
-                    }
-                });
-                if (totB > 0 || totE > 0 || totC > 0) {
-                    s.totalBilling = totB;
-                    s.totalExpense = totE;
-                    s.totalConsumption = totC;
-                    s.activeBilling = totB;
-                    s.activeExpense = totE;
-                    s.activeConsumption = totC;
-                }
-            }
-            return s;
-        });
+    closeSheetSelectionModal();
+    if (callback) callback(finalSites, loadedSourceName);
+};
 
-        if (globalMonthsSet.size > 0) {
-            const monthOrderMap = { Jan: 1, Feb: 2, Mar: 3, Apr: 4, May: 5, Jun: 6, Jul: 7, Aug: 8, Sep: 9, Oct: 10, Nov: 11, Dec: 12 };
-            window.MONTH_NAMES = Array.from(globalMonthsSet).sort((a, b) => {
-                const aShort = a.split(' ')[0];
-                const bShort = b.split(' ')[0];
-                const aYear = a.match(/20\d{2}/) ? parseInt(a.match(/20\d{2}/)[0]) : 2026;
-                const bYear = b.match(/20\d{2}/) ? parseInt(b.match(/20\d{2}/)[0]) : 2026;
-                if (aYear !== bYear) return aYear - bYear;
-                return (monthOrderMap[aShort] || 99) - (monthOrderMap[bShort] || 99);
-            });
-        }
+window.combineAllSheetsSelected = function() {
+    const sheetResults = window.pendingSheetResults;
+    const fileName = window.pendingFileName;
+    const callback = window.pendingParserCallback;
 
-        const finalSites = consolidatedSites.length > 0 ? consolidatedSites : sheetResults[0].processed;
-        finalSites.forEach((s, idx) => { s.id = idx + 1; s.sno = idx + 1; });
-        callback(finalSites, `${file.name} [Consolidated ${sheetResults.length} Tabs] (${finalSites.length} Sites)`);
-    } else {
-        const sr = sheetResults[selectedIndex];
-        if (sr) {
-            sr.processed.forEach((s, idx) => { s.id = idx + 1; s.sno = idx + 1; });
-            callback(sr.processed, `${file.name} [Tab: ${sr.sheetName}] (${sr.count} Sites)`);
-        }
-    }
+    if (!sheetResults || sheetResults.length === 0) return;
+
+    let finalSites = [];
+    let combinedRaw = [];
+
+    sheetResults.forEach(sr => {
+        finalSites = finalSites.concat(sr.processed);
+        combinedRaw = combinedRaw.concat(sr.rawJson);
+    });
+
+    // Re-index site IDs
+    finalSites.forEach((s, idx) => {
+        s.id = idx + 1;
+        s.sno = idx + 1;
+    });
+
+    const loadedSourceName = `${fileName} [Combined ${sheetResults.length} Sheets]`;
+    window.currentRawRows = combinedRaw;
+    window.currentRawFileName = loadedSourceName;
+
+    closeSheetSelectionModal();
+    if (callback) callback(finalSites, loadedSourceName);
 };
 
 </script>
-
-<!-- Sheet / Tab Selection Modal for Multi-Tab Excel Workbooks -->
-<div id="sheetSelectionModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md hidden p-4">
-    <div class="glass-panel w-full max-w-xl rounded-2xl border border-gray-700 shadow-2xl p-6 space-y-5 animate-fade-in">
-        <div class="flex items-center justify-between border-b border-gray-800 pb-3">
-            <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 rounded-xl bg-brand-500/20 border border-brand-500/40 flex items-center justify-center text-brand-400">
-                    <i class="fa-solid fa-layer-group text-lg"></i>
-                </div>
-                <div>
-                    <h3 class="text-base font-bold text-white">Select Sheet / Tab to Load</h3>
-                    <p id="sheetModalSubtitle" class="text-xs text-gray-400">Multiple tabs detected in your Excel workbook</p>
-                </div>
-            </div>
-            <button onclick="closeSheetSelectionModal()" class="text-gray-400 hover:text-white p-2 rounded-lg hover:bg-gray-800 transition">
-                <i class="fa-solid fa-xmark text-lg"></i>
-            </button>
-        </div>
-
-        <p class="text-xs text-gray-300">
-            Your Excel workbook has multiple tabs. Please select which sheet to analyze, or combine all tabs into a single consolidated view:
-        </p>
-
-        <div id="sheetButtonsContainer" class="space-y-2 max-h-80 overflow-y-auto pr-1">
-            <!-- Sheet Option Buttons Rendered Here Dynamically -->
-        </div>
-
-        <div class="pt-3 border-t border-gray-800 flex justify-end">
-            <button onclick="closeSheetSelectionModal()" class="px-4 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs font-semibold border border-gray-700 transition">
-                Cancel
-            </button>
-        </div>
-    </div>
-</div>
 
 </body>
 </html>
