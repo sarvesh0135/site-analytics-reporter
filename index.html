@@ -1716,12 +1716,7 @@ window.normalizeRawData = function(rows, customMapping = null) {
         { name: 'Apr', keys: ['apr', 'april', '04/', '04-', '/04/', '-04-', '04_', '_04_', '4/', '4-', '/4/', '-4-', '4_', '_4_', '2026-04', '2027-04', 'month 4', 'month-4', 'm04', 'm4'] },
         { name: 'May', keys: ['may', '05/', '05-', '/05/', '-05-', '05_', '_05_', '5/', '5-', '/5/', '-5-', '5_', '_5_', '2026-05', '2027-05', 'month 5', 'month-5', 'm05', 'm5'] },
         { name: 'Jun', keys: ['jun', 'june', '06/', '06-', '/06/', '-06-', '06_', '_06_', '6/', '6-', '/6/', '-6-', '6_', '_6_', '2026-06', '2027-06', 'month 6', 'month-6', 'm06', 'm6'] },
-        { name: 'Jul', keys: ['jul', 'july', '07/', '07-', '/07/', '-07-', '07_', '_07_', '7/', '7-', '/7/', '-7-', '7_', '_7_', '2026-07', '2027-07', 'month 7', 'month-7', 'm07', 'm7'] },
-        { name: 'Aug', keys: ['aug', 'august', '08/', '08-', '/08/', '-08-', '08_', '_08_', '8/', '8-', '/8/', '-8-', '8_', '_8_', '2026-08', '2027-08', 'month 8', 'month-8', 'm08', 'm8'] },
-        { name: 'Sep', keys: ['sep', 'sept', 'september', '09/', '09-', '/09/', '-09-', '09_', '_09_', '9/', '9-', '/9/', '-9-', '9_', '_9_', '2026-09', '2027-09', 'month 9', 'month-9', 'm09', 'm9'] },
-        { name: 'Oct', keys: ['oct', 'october', '10/', '10-', '/10/', '-10-', '10_', '_10_', '2026-10', '2027-10', 'month 10', 'month-10', 'm10'] },
-        { name: 'Nov', keys: ['nov', 'november', '11/', '11-', '/11/', '-11-', '11_', '_11_', '2026-11', '2027-11', 'month 11', 'month-11', 'm11'] },
-        { name: 'Dec', keys: ['dec', 'december', '12/', '12-', '/12/', '-12-', '12_', '_12_', '2026-12', '2027-12', 'month 12', 'month-12', 'm12'] }
+        { name: 'Jul', keys: ['jul', 'july', '07/', '07-', '/07/', '-07-', '07_', '_07_', '7/', '7-', '/7/', '-7-', '7_', '_7_', '2026-07', '2027-07', 'month 7', 'month-7', 'm07', 'm7'] }
     ];
 
     // Auto-detect years present in column headers (e.g. 2026, 2027)
@@ -1781,10 +1776,10 @@ window.normalizeRawData = function(rows, customMapping = null) {
     }
 
     // Read precalculated averages candidate keys ONCE outside the loop for speed
-    const keyAvgConsumption = findKey(['average monthly consumption', 'avg monthly consumption']);
-    const keyAvgBilling     = findKey(['average monthly billing', 'avg monthly billing']);
-    const keyAvgManpower    = findKey(['average manpower expense', 'avg manpower expense']);
-    const keyAvgMargin      = findKey(['avg gross margin', 'average gross margin', 'gross margin']);
+    const keyAvgConsumption = "";
+    const keyAvgBilling     = "";
+    const keyAvgManpower    = "";
+    const keyAvgMargin      = "";
 
     // Clean and normalize each site row
     const normalizedSites = rows.map((r, idx) => {
